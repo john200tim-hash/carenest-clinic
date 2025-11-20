@@ -3,12 +3,12 @@ const cors = require('cors');
 const mongoose = require('mongoose');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
+const Patient = require('./models/Patient'); // Import the Patient model
 
 // --- Mongoose Models ---
 // We need to define the Doctor model schema to interact with the database.
 const DoctorSchema = new mongoose.Schema({ id: String, email: { type: String, unique: true }, password: String });
 const Doctor = mongoose.model('Doctor', DoctorSchema);
-const Patient = require('./models/Patient'); // Import the Patient model
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -110,19 +110,17 @@ const protect = (req, res, next) => {
 };
 
 
-// --- Protected Patient Route ---
-// The 'protect' middleware will run before the main route logic
+// --- Protected Patient CRUD Routes ---
+
+// GET all patients
 app.get('/api/patients', protect, async (req, res) => {
   try {
-    // Now we can safely fetch and return patient data
     const patients = await Patient.find({});
     res.json(patients);
   } catch (error) {
     res.status(500).json({ message: 'Failed to fetch patients' });
   }
 });
-
-// --- Protected Patient CRUD Routes ---
 
 // CREATE a new patient
 app.post('/api/patients', protect, async (req, res) => {
