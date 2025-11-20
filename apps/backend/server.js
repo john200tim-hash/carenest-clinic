@@ -53,9 +53,18 @@ app.post('/api/doctor/register', async (req, res) => {
       password: hashedPassword,
     });
 
-    await newDoctor.save();
+    const savedDoctor = await newDoctor.save();
 
-    res.status(201).json({ message: 'Registration successful. Please log in.' });
+    // --- FIX: Automatically log in the user by creating a token ---
+    const token = jwt.sign({ id: savedDoctor.id, email: savedDoctor.email }, process.env.JWT_SECRET, { expiresIn: '1d' });
+
+    // Return the token and user info, just like the login route
+    res.status(201).json({
+      message: 'Registration successful!',
+      token,
+      id: savedDoctor.id,
+      name: savedDoctor.name
+    });
 
   } catch (error) {
     console.error('Registration Error:', error);
@@ -72,6 +81,7 @@ app.post('/api/doctor/login', async (req, res) => {
   }
 
   try {
+    // --- FIX: Verify credentials against the database ---
     const doctor = await Doctor.findOne({ email });
     if (!doctor) {
       return res.status(401).json({ message: 'Invalid credentials' });
