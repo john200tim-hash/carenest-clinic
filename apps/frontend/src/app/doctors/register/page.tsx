@@ -20,7 +20,7 @@ export default function DoctorRegistrationPage() {
     setMessage('');
 
     try {
-      const responseMessage = await registerDoctor(name, email, password, registrationCode);
+      const responseMessage = await registerDoctor(name, email, password, registrationCode); // Corrected function call
       setMessage(responseMessage);
     } catch (err: any) {
       setError(err.message || 'An unexpected error occurred.');
