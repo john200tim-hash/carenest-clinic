@@ -1,10 +1,10 @@
 'use client';
 import Link from 'next/link';
-import useAuth from '@/hooks/useAuth';
+import { useAuth } from '@/context/AuthContext';
 import { useRouter } from 'next/navigation';
 
 const Navbar = () => {
-  const { adminUser, adminLogout } = useAuth();
+  const { adminUser, logoutDoctor } = useAuth();
   const router = useRouter();
 
   return (
@@ -24,7 +24,7 @@ const Navbar = () => {
                 Patients
               </Link>
               <button
-                onClick={() => { adminLogout(); router.push('/doctors/login'); }}
+                onClick={logoutDoctor}
                 className="bg-red-600 text-white px-4 py-2 rounded-md hover:bg-red-700"
               >
                 Logout
