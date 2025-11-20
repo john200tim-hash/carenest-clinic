@@ -56,7 +56,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
 
     // --- FIX: Handle automatic login after registration ---
-    const user: DoctorUser = { id: data.id, name: data.name, email, token: data.token };
+    const user: DoctorUser = { id: data.doctor.id, name: data.doctor.name, email: data.doctor.email, token: data.token };
     setDoctorUser(user);
     localStorage.setItem('doctorToken', user.token);
     localStorage.setItem('doctorEmail', user.email);
