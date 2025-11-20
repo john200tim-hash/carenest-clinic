@@ -3,7 +3,7 @@
 import { createContext, useContext, useState, ReactNode, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 
-interface DoctorUser {
+interface AdminUser {
   id: string; // Doctor's ID
   name: string; // Doctor's Name
   email: string; // Doctor's Email
@@ -48,15 +48,14 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       body: JSON.stringify({ name, email, password, registrationCode }),
     });
 
-
     const data = await response.json();
-    if (!response.ok) {
 
+    if (!response.ok) {
       throw new Error(data.message || 'Registration failed.');
     }
 
-    // --- FIX: Handle automatic login after registration (data structure from backend) ---
-    const user: DoctorUser = { id: data.id, name: data.name, email: data.email, token: data.token };
+    // --- FIX: Handle automatic login after registration ---
+    const user: DoctorUser = { id: data.id, name: data.name, email, token: data.token };
     setDoctorUser(user);
     localStorage.setItem('doctorToken', user.token);
     localStorage.setItem('doctorEmail', user.email);

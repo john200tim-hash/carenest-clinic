@@ -6,7 +6,7 @@ const jwt = require('jsonwebtoken');
 
 // --- Mongoose Models ---
 // We need to define the Doctor model schema to interact with the database.
-const DoctorSchema = new mongoose.Schema({ id: String, name: { type: String, required: true }, email: { type: String, required: true, unique: true }, password: { type: String, required: true } });
+const DoctorSchema = new mongoose.Schema({ id: String, name: String, email: { type: String, required: true, unique: true }, password: { type: String, required: true } });
 const Doctor = mongoose.model('Doctor', DoctorSchema);
 const Patient = require('./models/Patient');
 const Appointment = require('./models/Appointment');
