@@ -48,9 +48,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       body: JSON.stringify({ name, email, password, registrationCode }),
     });
 
-    const data = await response.json();
 
+    const data = await response.json();
     if (!response.ok) {
+
       throw new Error(data.message || 'Registration failed.');
     }
 
