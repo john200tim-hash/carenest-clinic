@@ -1,14 +1,12 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { Patient } from '@/types/patient'; // Assuming this has all the medical info fields
+import { Patient } from '@/types/patient';
 import { Appointment } from '@/types/appointment';
 import { formatDate } from '@/lib/formatDate';
 
 type PatientView = 'appointments' | 'records';
 
-// A simplified type for the public patient data
-type PublicPatientData = Patient & { appointments: Appointment[] };
 interface Props {
   params: { patientId: string };
 }
@@ -26,15 +24,13 @@ export default function AppointmentStatusPage({ params }: Props) {
       setLoading(true);
       setError(null);
       try {
-        const response = await fetch(`${API_BASE_URL}/api/public/patients/${params.patientId}`);
+        const response = await fetch(`${API_BASE_URL}/api/public/patients/${params.patientId}`); // This endpoint now returns the full patient
         if (!response.ok) {
           throw new Error('Failed to fetch your records. Please check your Patient ID.');
         }
-        const data: PublicPatientData = await response.json();
+        const data: Patient = await response.json();
 
         setPatient(data);
-        setAppointments(data.appointments.map((appt: any) => ({ ...appt, date: new Date(appt.date) })));
-
 
       } catch (err: any) {
         setError(err.message);
@@ -65,7 +61,7 @@ export default function AppointmentStatusPage({ params }: Props) {
           <div>
             <h1 className="text-3xl font-bold text-gray-800">Appointment Status</h1>
             <p className="text-lg text-gray-600"> 
-              Welcome, <span className="font-semibold">{patient?.name || 'Patient'}</span>.
+              Welcome, <span className="font-semibold">{patient?.name || 'Patient'}</span>
             </p>
           </div>
           <button
@@ -93,37 +89,25 @@ export default function AppointmentStatusPage({ params }: Props) {
           <div className="mt-4">
             {activeTab === 'appointments' && (
               <div className="p-4 border rounded-lg shadow-sm bg-white">
-                <h3 className="text-xl font-semibold mb-4 text-gray-700">Your Appointments</h3>
-                {appointments.length > 0 ? (
+                <h3 className="text-xl font-semibold mb-4 text-gray-700">My Appointments</h3>
+                {patient?.appointments && patient.appointments.length > 0 ? (
                   <ul className="list-disc list-inside space-y-2">
-                    {appointments.map(appt => (
+                    {patient.appointments.map(appt => (
                       <li key={appt.id}><strong>{formatDate(new Date(appt.date))} at {appt.time}</strong> for "{appt.reason}" (Status: <span className="capitalize">{appt.status}</span>)</li>
                     ))}
                   </ul>
                 ) : (
-                  <p className="text-gray-500">No appointments found yet.</p>
+                  <p className="text-gray-500">No appointments have been scheduled yet.</p>
                 )}
               </div>
             )}
 
             {activeTab === 'records' && (
               <div className="space-y-4">
-                <div className="p-4 bg-blue-50 border-l-4 border-blue-500">
-                  <h3 className="font-semibold text-blue-800">Symptoms</h3>
-                  <p className="text-blue-700">{patient?.symptoms?.map(s => s.description).join(', ') || 'No symptoms recorded.'}</p>
-                </div>
-                <div className="p-4 bg-green-50 border-l-4 border-green-500">
-                  <h3 className="font-semibold text-green-800">Diagnoses</h3>
-                  <p className="text-green-700">{patient?.diagnoses?.map(d => d.condition).join(', ') || 'No diagnoses recorded.'}</p>
-                </div>
-                <div className="p-4 bg-purple-50 border-l-4 border-purple-500">
-                  <h3 className="font-semibold text-purple-800">Prescriptions</h3>
-                  <p className="text-purple-700">{patient?.prescriptions?.map(p => p.medication).join(', ') || 'No prescriptions recorded.'}</p>
-                </div>
-                <div className="p-4 bg-yellow-50 border-l-4 border-yellow-500">
-                  <h3 className="font-semibold text-yellow-800">Bills</h3>
-                  <p className="text-yellow-700">{patient?.bills?.map(b => `${b.description}: $${b.amount} (${b.status})`).join(', ') || 'No bills recorded.'}</p>
-                </div>
+                <RecordSection title="Symptoms" items={patient?.symptoms} render={item => `${formatDate(new Date(item.date))}: ${item.description} (${item.severity})`} />
+                <RecordSection title="Diagnoses" items={patient?.diagnoses} render={item => `${formatDate(new Date(item.date))}: ${item.condition} - Notes: ${item.notes}`} />
+                <RecordSection title="Prescriptions" items={patient?.prescriptions} render={item => `${formatDate(new Date(item.startDate))}: ${item.medication} (${item.dosage})`} />
+                <RecordSection title="Bills" items={patient?.bills} render={item => `${formatDate(new Date(item.date))}: ${item.description} - $${item.amount.toFixed(2)} (${item.status})`} />
               </div>
             )}
           </div>
@@ -132,3 +116,16 @@ export default function AppointmentStatusPage({ params }: Props) {
     </div>
   );
 }
+
+const RecordSection = ({ title, items, render }: { title: string, items: any[] | undefined, render: (item: any) => string }) => (
+  <div className="p-4 border rounded-lg shadow-sm bg-white">
+    <h3 className="text-xl font-semibold mb-2 text-gray-700">{title}</h3>
+    {items && items.length > 0 ? (
+      <ul className="list-disc list-inside space-y-1 text-gray-600">
+        {items.map((item, index) => <li key={index}>{render(item)}</li>)}
+      </ul>
+    ) : (
+      <p className="text-gray-500">No {title.toLowerCase()} recorded.</p>
+    )}
+  </div>
+);
