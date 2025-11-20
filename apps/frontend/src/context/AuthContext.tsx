@@ -11,7 +11,7 @@ interface DoctorUser {
 }
 
 interface AuthContextType {
-  adminUser: AdminUser | null;
+  doctorUser: DoctorUser | null;
   registerDoctor: (name: string, email: string, password: string, registrationCode: string) => Promise<string>;
   loginDoctor: (email: string, password: string) => Promise<void>;
   logoutDoctor: () => void;
@@ -22,7 +22,7 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
-  const [adminUser, setAdminUser] = useState<AdminUser | null>(null);
+  const [doctorUser, setDoctorUser] = useState<DoctorUser | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const router = useRouter();
@@ -36,7 +36,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     const name = localStorage.getItem('adminName');
     const email = localStorage.getItem('adminEmail');
     if (token && email) {
-      setAdminUser({ email, token });
+      setDoctorUser({ id, name, email, token });
     }
     setLoading(false);
   }, []);
@@ -73,21 +73,21 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
 
     const user: AdminUser = { id: data.id, name: data.name, email, token: data.token };
-    setAdminUser(user);
+    setDoctorUser(user);
     localStorage.setItem('adminToken', user.token);
     localStorage.setItem('adminEmail', user.email);
     router.push('/patients'); // Redirect to patient list after login
   };
 
   const logoutDoctor = () => {
-    setAdminUser(null);
+    setDoctorUser(null);
     localStorage.removeItem('adminToken');
     localStorage.removeItem('adminEmail');
     router.push('/doctors/login');
   };
 
   const value: AuthContextType = {
-    adminUser,
+    doctorUser,
     registerDoctor,
     loginDoctor,
     logoutDoctor,
