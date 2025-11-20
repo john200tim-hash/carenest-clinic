@@ -34,9 +34,10 @@ export const PatientProvider = ({ children }: PatientProviderProps) => {
     const headers: Record<string, string> = {
       'Content-Type': 'application/json',
     };
-    if (adminUser?.token) {
-      headers['Authorization'] = `Bearer ${adminUser.token}`;
+    if (!adminUser?.token) {
+      return headers;
     }
+    headers['Authorization'] = `Bearer ${adminUser.token}`;
     return headers;
   };
 
