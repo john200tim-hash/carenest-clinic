@@ -178,6 +178,21 @@ app.delete('/api/patients/:id', protect, async (req, res) => {
   }
 });
 
+// --- Appointment Request Route ---
+// This is a public route, so it does not use the 'protect' middleware.
+app.post('/api/appointments/request', async (req, res) => {
+  try {
+    const { name, emailOrMobile, date, time, reason } = req.body;
+    console.log('Received appointment request:', { name, emailOrMobile, date, time, reason });
+
+    // In a real application, you would save this to a new 'Appointments' collection in your database.
+    // For now, we just acknowledge the request and send a success response.
+    res.status(201).json({ message: 'Appointment request received successfully. We will contact you shortly.' });
+  } catch (error) {
+    res.status(500).json({ message: 'Failed to process appointment request.' });
+  }
+});
+
 app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
 });
