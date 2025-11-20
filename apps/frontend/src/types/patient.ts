@@ -1,4 +1,3 @@
-import { Appointment } from './appointment';
 import { Symptom } from './symptom';
 import { Diagnosis } from './diagnosis';
 import { Bill } from './bill';
