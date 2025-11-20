@@ -14,6 +14,12 @@ const Navbar = () => {
           Captimed Clinic
         </Link>
         <div className="space-x-6 flex items-center">
+          {/* Public Links */}
+          <Link href="/view-records" className="text-gray-600 hover:text-blue-600">
+            Patient Records
+          </Link>
+
+          {/* Doctor-Only Links */}
           {doctorUser ? ( // Use doctorUser
             <>
               {/* Links for logged-in doctors */}
