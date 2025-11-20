@@ -16,8 +16,8 @@ export interface Patient {
 
   // New fields for tracking medical information
   symptoms?: Symptom[];
-  appointments?: Appointment[]; // <--- THIS IS THE MISSING PROPERTY
   diagnoses?: Diagnosis[];
+  appointments?: Appointment[]; // <--- THIS IS THE MISSING PROPERTY
   bills?: Bill[];
   prescriptions?: Prescription[];
 }

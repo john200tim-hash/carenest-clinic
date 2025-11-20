@@ -3,7 +3,6 @@
 import { useEffect, useState } from 'react';
 import { Patient } from '@/types/patient';
 import { Appointment } from '@/types/appointment';
-import PatientReceipt from '@/components/PatientReceipt'; // Import the new component
 import { formatDate } from '@/lib/formatDate';
 
 type PatientView = 'appointments' | 'records';
@@ -14,6 +13,7 @@ interface Props {
 
 export default function AppointmentStatusPage({ params }: Props) {
   const [patient, setPatient] = useState<Patient | null>(null);
+  const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<PatientView>('appointments');
@@ -56,7 +56,7 @@ export default function AppointmentStatusPage({ params }: Props) {
 
   return (
     <div className="container mx-auto p-8 max-w-4xl">
-      <div className="p-8 border rounded-lg shadow-lg bg-white">
+      <div className="p-8 border rounded-lg shadow-lg bg-white"> 
         <div className="flex justify-between items-start mb-6">
           <div>
             <h1 className="text-3xl font-bold text-gray-800">Appointment Status</h1>
@@ -89,8 +89,8 @@ export default function AppointmentStatusPage({ params }: Props) {
           <div className="mt-4">
             {activeTab === 'appointments' && (
               <div className="p-4 border rounded-lg shadow-sm bg-white">
-                <h3 className="text-xl font-semibold mb-4 text-gray-700">Scheduled Appointments</h3>
-                {patient?.appointments && patient.appointments.length > 0 ? ( // Assuming appointments are nested in patient object
+                <h3 className="text-xl font-semibold mb-4 text-gray-700">My Appointments</h3>
+                {patient?.appointments && patient.appointments.length > 0 ? (
                   <ul className="list-disc list-inside space-y-2">
                     {patient.appointments.map(appt => (
                       <li key={appt.id}><strong>{formatDate(new Date(appt.date))} at {appt.time}</strong> for "{appt.reason}" (Status: <span className="capitalize">{appt.status}</span>)</li>
@@ -103,7 +103,12 @@ export default function AppointmentStatusPage({ params }: Props) {
             )}
 
             {activeTab === 'records' && (
-              <PatientReceipt patient={patient!} /> {/* Use non-null assertion */}
+              <div className="space-y-4">
+                <RecordSection title="Symptoms" items={patient?.symptoms} render={item => `${formatDate(new Date(item.date))}: ${item.description} (${item.severity})`} />
+                <RecordSection title="Diagnoses" items={patient?.diagnoses} render={item => `${formatDate(new Date(item.date))}: ${item.condition} - Notes: ${item.notes}`} />
+                <RecordSection title="Prescriptions" items={patient?.prescriptions} render={item => `${formatDate(new Date(item.startDate))}: ${item.medication} (${item.dosage})`} />
+                <RecordSection title="Bills" items={patient?.bills} render={item => `${formatDate(new Date(item.date))}: ${item.description} - $${item.amount.toFixed(2)} (${item.status})`} />
+              </div>
             )}
           </div>
         </div>
@@ -111,3 +116,17 @@ export default function AppointmentStatusPage({ params }: Props) {
     </div>
   );
 }
+
+
+const RecordSection = ({ title, items, render }: { title: string, items: any[] | undefined, render: (item: any) => string }) => (
+  <div className="p-4 border rounded-lg shadow-sm bg-white">
+    <h3 className="text-xl font-semibold mb-2 text-gray-700">{title}</h3>
+    {items && items.length > 0 ? (
+      <ul className="list-disc list-inside space-y-1 text-gray-600">
+        {items.map((item, index) => <li key={index}>{render(item)}</li>)}
+      </ul>
+    ) : (
+      <p className="text-gray-500">No {title.toLowerCase()} recorded.</p>
+    )}
+  </div>
+);
