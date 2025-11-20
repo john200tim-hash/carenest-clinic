@@ -6,6 +6,14 @@ import { Patient } from '@/types/patient';
 import { formatDate } from '@/lib/formatDate';
 import MedicalInfoManager from '@/components/MedicalInfoManager';
 import { Appointment } from '@/types/appointment';
+// Inside your page.tsx component...
+import { usePatients } from '@/context/PatientContext'; // Import the context hook
+
+const { getAuthHeaders } = usePatients(); // Get the headers function from the context
+
+// ... some useEffect or function
+const response = await fetch(url, { headers: getAuthHeaders() }); // THIS IS THE CORRECT CODE
+// ...
 
 interface Props {
   params: { id: string };

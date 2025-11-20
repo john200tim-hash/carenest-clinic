@@ -12,6 +12,7 @@ interface PatientContextType {
   deletePatient: (id: string) => Promise<void>;
   getPatientById: (id: string) => Promise<Patient | null>;
   addMedicalInfo: (patientId: string, infoType: string, data: any) => Promise<void>;
+  getAuthHeaders: () => Record<string, string>; // Expose the headers function
 }
 
 interface PatientProviderProps {
@@ -165,6 +166,7 @@ export const PatientProvider = ({ children }: PatientProviderProps) => {
     deletePatient,
     getPatientById,
     addMedicalInfo,
+    getAuthHeaders, // Provide the function through the context
   };
 
   return (
