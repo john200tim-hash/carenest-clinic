@@ -196,3 +196,21 @@ app.post('/api/appointments/request', async (req, res) => {
 app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
 });
+// This is a public route, so it does not use the 'protect' middleware.
+app.post('/api/appointments/request', async (req, res) => {
+  try {
+    // Extract data from the request body
+    const { name, emailOrMobile, date, time, reason } = req.body;
+    console.log('Received appointment request:', { name, emailOrMobile, date, time, reason });
+
+    // In a real application, you would save this to a new 'Appointments' collection in your database.
+    // For now, we just acknowledge the request and send a success response.
+
+    // Send a 201 Created status with a success message
+    res.status(201).json({ message: 'Appointment request received successfully. We will contact you shortly.' });
+  } catch (error) {
+    // If there is an error, send a 500 Internal Server Error with a JSON error message
+    res.status(500).json({ message: 'Failed to process appointment request.' });
+  }
+});
+
