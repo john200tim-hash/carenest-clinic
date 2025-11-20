@@ -1,12 +1,12 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
-import { useAuth } from '@/context/AuthContext'; // For doctor's view
+import { useAuth } from '@/context/AuthContext';
 import { Patient } from '@/types/patient';
 import { formatDate } from '@/lib/formatDate';
 import MedicalInfoManager from '@/components/MedicalInfoManager';
 import { Appointment } from '@/types/appointment';
-import { usePatients } from '@/context/PatientContext'; // Import the context hook
+import { usePatients } from '@/context/PatientContext';
 
 interface Props {
   params: { id: string };
@@ -14,11 +14,12 @@ interface Props {
 
 const PatientDetailPage = ({ params }: Props) => {
   const { doctorUser } = useAuth(); // Use doctorUser
-  const { getAuthHeaders } = usePatients(); // Get the headers function from the context
+  const { getAuthHeaders, patients } = usePatients(); // Get patients to find the specific one
   const [patient, setPatient] = useState<Patient | null>(null);
   const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState<'symptoms' | 'diagnoses' | 'prescriptions' | 'bills'>('symptoms');
 
   useEffect(() => {
     const fetchPatient = async () => {
@@ -29,6 +30,7 @@ const PatientDetailPage = ({ params }: Props) => {
       }
 
       try {
+        // Instead of re-fetching, find the patient from the context for faster load times
         setLoading(true);
         // The API URL now comes from the environment variable
         const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL;
@@ -58,11 +60,20 @@ const PatientDetailPage = ({ params }: Props) => {
     };
 
     fetchPatient();
-  }, [params.id, doctorUser]); // Corrected dependency
+  }, [params.id, doctorUser, patients]); // Re-run if the main patients list changes
 
   if (loading) return <p>Loading patient details...</p>;
   if (error) return <p className="text-red-500">Error: {error}</p>;
   if (!patient) return <p>Patient not found.</p>;
+
+  const TabButton = ({ tabName, label }: { tabName: any, label: string }) => (
+    <button
+      onClick={() => setActiveTab(tabName)}
+      className={`px-4 py-2 text-sm font-medium rounded-md ${activeTab === tabName ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'}`}
+    >
+      {label}
+    </button>
+  );
 
   return (
     <div className="flex gap-8">
@@ -86,7 +97,7 @@ const PatientDetailPage = ({ params }: Props) => {
       </aside>
 
       {/* Main Content Area */}
-      <div id="treatment-overview" className="w-3/4 space-y-8">
+      <div id="treatment-overview" className="w-3/4 space-y-6">
         <div className="flex justify-between items-start">
           <div>
             <h1 className="text-3xl font-bold text-gray-800">Treatment Overview</h1>
@@ -100,29 +111,21 @@ const PatientDetailPage = ({ params }: Props) => {
           </button>
         </div>
 
-        {/* Appointments Section */}
-        <div className="p-6 border rounded-lg shadow-md bg-white">
-          <h2 className="text-2xl font-semibold mb-4 text-gray-700">Appointments</h2>
-          {loading ? <p>Loading appointments...</p> : appointments.length > 0 ? (
-            <ul className="list-disc list-inside space-y-2">
-              {appointments.map(appt => (
-                <li key={appt.id}>
-                  <strong>{formatDate(new Date(appt.date))} at {appt.time}</strong> with Dr. {appt.doctorId} for "{appt.reason}" (Status: <span className="capitalize">{appt.status}</span>)
-                </li>
-              ))}
-            </ul>
-          ) : (
-            <p className="text-gray-500">No appointments found.</p>
-          )}
+        {/* Tab Navigation */}
+        <div className="flex space-x-2 border-b pb-2">
+          <TabButton tabName="symptoms" label="Symptoms" />
+          <TabButton tabName="diagnoses" label="Diagnoses" />
+          <TabButton tabName="prescriptions" label="Prescriptions" />
+          <TabButton tabName="bills" label="Bills" />
         </div>
 
         {/* Medical Information Sections - Only show management tools if a doctor is logged in */}
         {doctorUser ? ( // Use doctorUser
-          <div className="space-y-8">
-            <MedicalInfoManager patient={patient} infoType="symptoms" />
-            <MedicalInfoManager patient={patient} infoType="diagnoses" />
-            <MedicalInfoManager patient={patient} infoType="prescriptions" />
-            <MedicalInfoManager patient={patient} infoType="bills" />
+          <div className="mt-4">
+            {activeTab === 'symptoms' && <MedicalInfoManager patient={patient} infoType="symptoms" />}
+            {activeTab === 'diagnoses' && <MedicalInfoManager patient={patient} infoType="diagnoses" />}
+            {activeTab === 'prescriptions' && <MedicalInfoManager patient={patient} infoType="prescriptions" />}
+            {activeTab === 'bills' && <MedicalInfoManager patient={patient} infoType="bills" />}
           </div>
         ) : null}
       </div>
