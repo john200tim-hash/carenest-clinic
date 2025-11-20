@@ -58,7 +58,7 @@ const PatientDetailPage = ({ params }: Props) => {
     };
 
     fetchPatient();
-  }, [params.id, adminUser]);
+  }, [params.id, doctorUser]);
 
   if (loading) return <p>Loading patient details...</p>;
   if (error) return <p className="text-red-500">Error: {error}</p>;
