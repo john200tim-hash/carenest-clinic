@@ -122,6 +122,62 @@ app.get('/api/patients', protect, async (req, res) => {
   }
 });
 
+// --- Protected Patient CRUD Routes ---
+
+// CREATE a new patient
+app.post('/api/patients', protect, async (req, res) => {
+  try {
+    const newPatient = new Patient({
+      id: `pat_${Date.now()}`,
+      ...req.body
+    });
+    await newPatient.save();
+    res.status(201).json(newPatient);
+  } catch (error) {
+    console.error('Create Patient Error:', error);
+    res.status(400).json({ message: 'Failed to create patient', error: error.message });
+  }
+});
+
+// GET a single patient by ID
+app.get('/api/patients/:id', protect, async (req, res) => {
+  try {
+    const patient = await Patient.findOne({ id: req.params.id });
+    if (!patient) {
+      return res.status(404).json({ message: 'Patient not found' });
+    }
+    res.json(patient);
+  } catch (error) {
+    res.status(500).json({ message: 'Failed to fetch patient' });
+  }
+});
+
+// UPDATE a patient by ID
+app.put('/api/patients/:id', protect, async (req, res) => {
+  try {
+    const updatedPatient = await Patient.findOneAndUpdate({ id: req.params.id }, req.body, { new: true });
+    if (!updatedPatient) {
+      return res.status(404).json({ message: 'Patient not found' });
+    }
+    res.json(updatedPatient);
+  } catch (error) {
+    res.status(400).json({ message: 'Failed to update patient', error: error.message });
+  }
+});
+
+// DELETE a patient by ID
+app.delete('/api/patients/:id', protect, async (req, res) => {
+  try {
+    const deletedPatient = await Patient.findOneAndDelete({ id: req.params.id });
+    if (!deletedPatient) {
+      return res.status(404).json({ message: 'Patient not found' });
+    }
+    res.status(200).json({ message: 'Patient deleted successfully' });
+  } catch (error) {
+    res.status(500).json({ message: 'Failed to delete patient' });
+  }
+});
+
 app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
 });
