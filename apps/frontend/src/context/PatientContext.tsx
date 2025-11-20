@@ -68,7 +68,7 @@ export const PatientProvider = ({ children }: PatientProviderProps) => { // Rena
 
   useEffect(() => {
     fetchPatients();
-  }, [adminUser?.token]); // Refetch when adminUser token changes
+  }, [doctorUser?.token]); // Corrected dependency
 
   const addPatient = async (patient: Omit<Patient, 'id'>) => {
     try {
@@ -159,13 +159,14 @@ export const PatientProvider = ({ children }: PatientProviderProps) => { // Rena
 
   const value: PatientContextType = {
     patients,
+    loading,
+    error,
     addPatient,
     updatePatient,
     deletePatient,
     getPatientById,
     addMedicalInfo,
-    loading,
-    error,
+    getAuthHeaders, // Add missing function to context value
   };
 
   return (

@@ -31,12 +31,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   useEffect(() => {
     // Check for a token in local storage on initial load
-    const token = localStorage.getItem('adminToken');
-    const id = localStorage.getItem('adminId');
-    const name = localStorage.getItem('adminName');
-    const email = localStorage.getItem('adminEmail');
-    if (token && email) {
-      setDoctorUser({ id, name, email, token }); // Use DoctorUser and setDoctorUser
+    const token = localStorage.getItem('doctorToken');
+    const id = localStorage.getItem('doctorId');
+    const name = localStorage.getItem('doctorName');
+    const email = localStorage.getItem('doctorEmail');
+    if (token && id && name && email) {
+      setDoctorUser({ id, name, email, token });
     }
     setLoading(false);
   }, []);
