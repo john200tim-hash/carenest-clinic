@@ -41,9 +41,6 @@
       "@/hooks/*": [
         "./src/hooks/*"
       ],
-      "@/api/*": [
-        "./src/app/api/*"
-      ]
     },
     "plugins": [
       {
