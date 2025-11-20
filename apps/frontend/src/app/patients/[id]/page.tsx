@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
-import useAuth from '@/hooks/useAuth'; // For doctor's view
+import { useAuth } from '@/context/AuthContext'; // For doctor's view
 import { Patient } from '@/types/patient';
 import { formatDate } from '@/lib/formatDate';
 import MedicalInfoManager from '@/components/MedicalInfoManager';
