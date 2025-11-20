@@ -17,7 +17,7 @@ const Navbar = () => {
           {adminUser ? (
             <>
               {/* Links for logged-in doctors */}
-              <Link href="/appointments" className="text-gray-600 hover:text-blue-600">
+              <Link href="/appointments" className="text-gray-600 hover:text-blue-600 mr-4">
                 Appointments
               </Link>
               <Link href="/patients" className="text-gray-600 hover:text-blue-600">

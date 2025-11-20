@@ -85,7 +85,7 @@ app.post('/api/doctor/login', async (req, res) => {
     // Create and sign a JWT
     const token = jwt.sign({ id: doctor.id, email: doctor.email }, process.env.JWT_SECRET, { expiresIn: '1d' });
 
-    res.json({ message: 'Login successful', token });
+    res.json({ message: 'Login successful', token, name: doctor.name });
 
   } catch (error) {
     console.error('Login Error:', error);

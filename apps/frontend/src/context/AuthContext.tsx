@@ -37,11 +37,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     setLoading(false);
   }, []);
 
-  const registerDoctor = async (email: string, password: string, registrationCode: string): Promise<string> => {
+  const registerDoctor = async (name: string, email: string, password: string, registrationCode: string): Promise<string> => {
     const response = await fetch(`${API_BASE_URL}/api/doctor/register`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email, password, registrationCode }),
+      body: JSON.stringify({ name, email, password, registrationCode }),
     });
 
     const data = await response.json();

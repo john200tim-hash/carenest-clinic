@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useAuth } from '@/context/AuthContext';
 
 export default function DoctorRegistrationPage() {
+  const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [registrationCode, setRegistrationCode] = useState('');
@@ -19,7 +20,7 @@ export default function DoctorRegistrationPage() {
     setMessage('');
 
     try {
-      const responseMessage = await registerDoctor(email, password, registrationCode);
+      const responseMessage = await registerDoctor(name, email, password, registrationCode);
       setMessage(responseMessage);
     } catch (err: any) {
       setError(err.message || 'An unexpected error occurred.');
@@ -31,6 +32,16 @@ export default function DoctorRegistrationPage() {
       <div className="w-full max-w-md p-8 space-y-6 bg-white rounded-lg shadow-md">
         <h1 className="text-2xl font-bold text-center text-gray-800">Doctor Registration</h1>
         <form onSubmit={handleSubmit} className="space-y-6">
+        <div>
+            <label className="block text-sm font-medium text-gray-700">Full Name</label>
+            <input
+              type="text"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              required
+              className="w-full px-3 py-2 mt-1 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500"
+            />
+          </div>
           <div>
             <label className="block text-sm font-medium text-gray-700">Email</label>
             <input
