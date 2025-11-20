@@ -20,21 +20,20 @@ interface AppointmentProviderProps {
 }
 
 export const AppointmentProvider = ({ children }: AppointmentProviderProps) => {
-  const { adminUser } = useAuth();
+  const { doctorUser } = useAuth();
   const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   const API_BASE_URL = '/api';
-
   const getAuthHeaders = () => ({
-    'Authorization': `Bearer ${adminUser?.token}`,
-    'Content-Type': 'application/json',
+    'Authorization': `Bearer ${doctorUser?.token}`,
+    'Content-Type': 'application/json', 
   });
 
   useEffect(() => {
     const fetchAppointments = async () => {
-      if (!adminUser?.token) {
+      if (!doctorUser?.token) {
         setAppointments([]);
         setLoading(false);
         return;
@@ -53,10 +52,10 @@ export const AppointmentProvider = ({ children }: AppointmentProviderProps) => {
       }
     };
     fetchAppointments();
-  }, [adminUser?.token]);
+  }, [doctorUser?.token]);
 
   const addAppointment = async (appointment: Omit<Appointment, 'id'>) => {
-    if (!adminUser?.token) {
+    if (!doctorUser?.token) {
       setError("Authentication required to add an appointment.");
       return;
     }
