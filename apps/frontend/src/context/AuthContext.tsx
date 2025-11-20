@@ -1,64 +1,103 @@
 'use client';
+
 import { createContext, useContext, useState, ReactNode, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 
 interface AdminUser {
-  id: string;
   email: string;
   token: string;
-  role: 'admin' | 'doctor';
 }
 
 interface AuthContextType {
   adminUser: AdminUser | null;
-  adminLogin: (email: string, token: string, role: 'admin' | 'doctor') => void;
-  adminLogout: () => void;
-
+  registerDoctor: (email: string, password: string, registrationCode: string) => Promise<string>;
+  loginDoctor: (email: string, password: string) => Promise<void>;
+  logoutDoctor: () => void;
+  loading: boolean;
+  error: string | null;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-interface AuthProviderProps {
-  children: ReactNode;
-}
-
-export const AuthProvider = ({ children }: AuthProviderProps) => {
+export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [adminUser, setAdminUser] = useState<AdminUser | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const router = useRouter();
+
+  const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL;
 
   useEffect(() => {
-    // Check for existing token in localStorage on mount
-    const storedToken = localStorage.getItem('adminToken');
-    const storedEmail = localStorage.getItem('adminEmail');
-    const storedRole = localStorage.getItem('adminRole') as 'admin' | 'doctor' | null;
-
-    if (storedToken && storedEmail && storedRole) {
-      setAdminUser({ id: 'user', email: storedEmail, token: storedToken, role: storedRole });
+    // Check for a token in local storage on initial load
+    const token = localStorage.getItem('adminToken');
+    const email = localStorage.getItem('adminEmail');
+    if (token && email) {
+      setAdminUser({ email, token });
     }
+    setLoading(false);
   }, []);
 
-  const adminLogin = (email: string, token: string, role: string) => {
-    localStorage.setItem('adminToken', token);
-    localStorage.setItem('adminEmail', email);
-    localStorage.setItem('adminRole', role);
-    setAdminUser({ id: 'user', email, token, role: role as 'admin' | 'doctor' });
+  const registerDoctor = async (email: string, password: string, registrationCode: string): Promise<string> => {
+    const response = await fetch(`${API_BASE_URL}/api/doctor/register`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, password, registrationCode }),
+    });
 
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(data.message || 'Registration failed.');
+    }
+
+    return data.message; // e.g., "Registration successful. Please log in."
   };
 
-  const adminLogout = () => {
+  const loginDoctor = async (email: string, password: string) => {
+    setError(null);
+    const response = await fetch(`${API_BASE_URL}/api/doctor/login`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, password }),
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(data.message || 'Login failed.');
+    }
+
+    const user: AdminUser = { email, token: data.token };
+    setAdminUser(user);
+    localStorage.setItem('adminToken', user.token);
+    localStorage.setItem('adminEmail', user.email);
+    router.push('/patients'); // Redirect to patient list after login
+  };
+
+  const logoutDoctor = () => {
+    setAdminUser(null);
     localStorage.removeItem('adminToken');
     localStorage.removeItem('adminEmail');
-    localStorage.removeItem('adminRole');
-    setAdminUser(null);
+    router.push('/doctors/login');
+  };
+
+  const value: AuthContextType = {
+    adminUser,
+    registerDoctor,
+    loginDoctor,
+    logoutDoctor,
+    loading,
+    error,
   };
 
   return (
-    <AuthContext.Provider value={{ adminUser, adminLogin, adminLogout }}>
+    <AuthContext.Provider value={value}>
       {children}
     </AuthContext.Provider>
   );
 };
 
 export const useAuth = () => {
-
   const context = useContext(AuthContext);
   if (!context) {
     throw new Error('useAuth must be used within an AuthProvider');
