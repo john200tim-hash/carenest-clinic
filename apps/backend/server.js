@@ -7,6 +7,8 @@ const jwt = require('jsonwebtoken');
 // --- Mongoose Models ---
 // We need to define the Doctor model schema to interact with the database.
 const DoctorSchema = new mongoose.Schema({ id: String, email: { type: String, required: true, unique: true }, password: { type: String, required: true } });
+const Patient = require('./models/Patient');
+const Appointment = require('./models/Appointment');
 const Doctor = mongoose.model('Doctor', DoctorSchema);
 
 const app = express();
@@ -108,14 +110,107 @@ const protect = (req, res, next) => {
   }
 };
 
-// --- Protected Patient Route ---
-// This route is now protected by the 'protect' middleware and fetches real data.
+// --- Protected Patient CRUD Routes (for Doctors) ---
+
+// GET all patients
 app.get('/api/patients', protect, async (req, res) => {
   try {
     const patients = await Patient.find({});
     res.json(patients);
   } catch (error) {
     res.status(500).json({ message: 'Failed to fetch patients' });
+  }
+});
+
+// GET a single patient by ID
+app.get('/api/patients/:id', protect, async (req, res) => {
+  try {
+    const patient = await Patient.findOne({ id: req.params.id });
+    if (!patient) {
+      return res.status(404).json({ message: 'Patient not found' });
+    }
+    res.json(patient);
+  } catch (error) {
+    res.status(500).json({ message: 'Failed to fetch patient' });
+  }
+});
+
+// UPDATE a patient's medical info (for symptoms, diagnoses, etc.)
+app.post('/api/patients/:patientId/:infoType', protect, async (req, res) => {
+  const { patientId, infoType } = req.params;
+  const data = req.body;
+
+  try {
+    const patient = await Patient.findOne({ id: patientId });
+    if (!patient) {
+      return res.status(404).json({ message: 'Patient not found' });
+    }
+
+    // Dynamically push to the correct array in the patient document
+    patient[infoType] = patient[infoType] || [];
+    patient[infoType].push({ id: `${infoType.slice(0, 4)}_${Date.now()}`, ...data });
+
+    await patient.save();
+    res.status(201).json(patient);
+  } catch (error) {
+    console.error(`Error adding ${infoType}:`, error);
+    res.status(500).json({ message: `Failed to add ${infoType}` });
+  }
+});
+
+// --- Protected Appointment Routes (for Doctors) ---
+
+// GET all appointments for a specific patient
+app.get('/api/patients/:id/appointments', protect, async (req, res) => {
+  try {
+    const appointments = await Appointment.find({ patientId: req.params.id });
+    res.json(appointments);
+  } catch (error) {
+    res.status(500).json({ message: 'Failed to fetch appointments' });
+  }
+});
+
+// --- Public Appointment Request Route (for Patients) ---
+
+app.post('/api/appointments/request', async (req, res) => {
+  const { name, emailOrMobile, date, time, reason } = req.body;
+
+  if (!name || !emailOrMobile || !date || !time || !reason) {
+    return res.status(400).json({ message: 'All fields are required.' });
+  }
+
+  try {
+    // Find patient or create a new one
+    let patient = await Patient.findOne({ emailOrMobile });
+    if (!patient) {
+      patient = new Patient({
+        id: `pat_${Date.now()}`,
+        name,
+        emailOrMobile,
+        // Add default/placeholder values for other required fields
+        dateOfBirth: new Date(),
+        gender: 'Not specified',
+        contactNumber: emailOrMobile,
+        address: 'Not specified',
+      });
+      await patient.save();
+    }
+
+    // Create the new appointment
+    const appointment = new Appointment({
+      id: `appt_${Date.now()}`,
+      patientId: patient.id,
+      patientName: patient.name,
+      date, time, reason,
+    });
+    await appointment.save();
+
+    // Return the patient object so the frontend can get the ID
+    res.status(201).json(patient);
+
+  } catch (error) {
+    console.error('Appointment Request Error:', error);
+    res.status(500).json({ message: 'Failed to process appointment request.' });
   }
 });
 

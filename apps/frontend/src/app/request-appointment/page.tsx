@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { Patient } from '@/types/patient';
 
 const RequestAppointmentPage = () => {
   const [loading, setLoading] = useState(false);
@@ -10,9 +11,9 @@ const RequestAppointmentPage = () => {
   const [formData, setFormData] = useState({
     name: '',
     emailOrMobile: '',
-    reason: '',
-    preferredDate: '',
-    preferredTime: '',
+    date: '',
+    time: '',
+    reason: ''
   });
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
@@ -26,22 +27,24 @@ const RequestAppointmentPage = () => {
     setError(null);
 
     try {
-      // This endpoint doesn't require auth, as it's a public request
-      const response = await fetch('/api/appointments/request', {
+      const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL;
+      const response = await fetch(`${API_BASE_URL}/api/appointments/request`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(formData),
       });
 
       if (!response.ok) {
-        const errorData = await response.json();
+        const errorData = await response.json().catch(() => ({ message: 'An unknown error occurred.' }));
         throw new Error(errorData.message || 'Failed to submit request.');
       }
 
-      const result = await response.json();
-      alert(`Your request has been submitted! Your new Patient ID is: ${result.patientId}. Please save it for future reference.`);
-      // Automatically redirect to the new records page
-      router.push(`/patients/${result.patientId}`);
+      const patient: Patient = await response.json(); // The backend now returns the patient object
+
+      // Store name for the status page and redirect
+      localStorage.setItem('newPatientName', patient.name);
+      router.push(`/appointment-status/${patient.id}`);
+
     } catch (err: any) {
       setError(err.message);
     } finally {
@@ -64,12 +67,12 @@ const RequestAppointmentPage = () => {
           <input type="text" id="emailOrMobile" name="emailOrMobile" value={formData.emailOrMobile} onChange={handleChange} required className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" />
         </div>
         <div>
-          <label htmlFor="preferredDate" className="block text-sm font-medium text-gray-700">Preferred Date</label>
-          <input type="date" id="preferredDate" name="preferredDate" value={formData.preferredDate} onChange={handleChange} required className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" />
+          <label htmlFor="date" className="block text-sm font-medium text-gray-700">Preferred Date</label>
+          <input type="date" id="date" name="date" value={formData.date} onChange={handleChange} required className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" />
         </div>
         <div>
-          <label htmlFor="preferredTime" className="block text-sm font-medium text-gray-700">Preferred Time</label>
-          <input type="time" id="preferredTime" name="preferredTime" value={formData.preferredTime} onChange={handleChange} required className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" />
+          <label htmlFor="time" className="block text-sm font-medium text-gray-700">Preferred Time</label>
+          <input type="time" id="time" name="time" value={formData.time} onChange={handleChange} required className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" />
         </div>
         <div>
           <label htmlFor="reason" className="block text-sm font-medium text-gray-700">Reason for Visit</label>
