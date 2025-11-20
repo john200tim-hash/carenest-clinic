@@ -27,14 +27,16 @@ const RequestAppointmentPage = () => {
     setError(null);
 
     try {
+      // Ensure the API_BASE_URL is correctly retrieved from environment variables
       const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL;
       const response = await fetch(`${API_BASE_URL}/api/appointments/request`, {
-        method: 'POST',
+        method: 'POST', // Explicitly define the method as POST
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(formData),
       });
 
       if (!response.ok) {
+        // Attempt to parse error JSON, with a fallback for non-JSON responses
         const errorData = await response.json().catch(() => ({ message: 'An unknown error occurred.' }));
         throw new Error(errorData.message || 'Failed to submit request.');
       }
