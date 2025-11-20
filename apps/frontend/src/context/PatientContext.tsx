@@ -28,13 +28,13 @@ export const PatientProvider = ({ children }: PatientProviderProps) => {
   const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL;
 
   const getAuthHeaders = () => {
-    if (!adminUser?.token) {
-      return {};
-    }
-    return {
-      'Authorization': `Bearer ${adminUser.token}`,
+    const headers: Record<string, string> = {
       'Content-Type': 'application/json',
     };
+    if (adminUser?.token) {
+      headers['Authorization'] = `Bearer ${adminUser.token}`;
+    }
+    return headers;
   };
 
   const fetchPatients = async () => {

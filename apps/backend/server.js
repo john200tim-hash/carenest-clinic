@@ -8,6 +8,7 @@ const jwt = require('jsonwebtoken');
 // We need to define the Doctor model schema to interact with the database.
 const DoctorSchema = new mongoose.Schema({ id: String, email: { type: String, unique: true }, password: String });
 const Doctor = mongoose.model('Doctor', DoctorSchema);
+const Patient = require('./models/Patient'); // Import the Patient model
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -91,13 +92,31 @@ app.post('/api/doctor/login', async (req, res) => {
   }
 });
 
-// Example: Get All Patients Route
-app.get('/api/patients', async (req, res) => {
-  // Here you would add authentication middleware to check for a doctor's token
+// --- Authentication Middleware ---
+const protect = (req, res, next) => {
+  const authHeader = req.headers.authorization;
+  if (authHeader && authHeader.startsWith('Bearer ')) {
+    const token = authHeader.split(' ')[1];
+    jwt.verify(token, process.env.JWT_SECRET, (err, user) => {
+      if (err) {
+        return res.status(403).json({ message: 'Token is not valid' }); // Forbidden
+      }
+      req.user = user;
+      next();
+    });
+  } else {
+    res.status(401).json({ message: 'Not authorized, no token' }); // Unauthorized
+  }
+};
+
+
+// --- Protected Patient Route ---
+// The 'protect' middleware will run before the main route logic
+app.get('/api/patients', protect, async (req, res) => {
   try {
-    // const patients = await PatientModel.find({});
-    // res.json(patients);
-    res.json({ message: "This will return all patients from MongoDB" });
+    // Now we can safely fetch and return patient data
+    const patients = await Patient.find({});
+    res.json(patients);
   } catch (error) {
     res.status(500).json({ message: 'Failed to fetch patients' });
   }
