@@ -3,6 +3,7 @@
 import React, { useEffect, useState } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { Patient } from '@/types/patient'; // This should now import all sub-types
+import EditPatientForm from '@/components/EditPatientForm'; // Import the new form
 import { formatDate } from '@/lib/formatDate';
 import MedicalInfoManager from '@/components/MedicalInfoManager';
 import { Appointment } from '@/types/appointment';
@@ -19,6 +20,7 @@ const PatientDetailPage = ({ params }: Props) => {
   const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [isEditing, setIsEditing] = useState(false); // State to control the modal
 
   useEffect(() => {
     const fetchPatient = async () => {
@@ -73,7 +75,7 @@ const PatientDetailPage = ({ params }: Props) => {
         <div className="space-y-2">
           <div className="p-3 bg-white rounded-md shadow-sm">
             <h3 className="font-semibold text-gray-700">Name</h3>
-            <p className="text-gray-600">{patient.name}</p>
+            <p className="text-gray-600">{patient.name}</p> 
           </div>
           <div className="p-3 bg-white rounded-md shadow-sm">
             <h3 className="font-semibold text-gray-700">Patient ID</h3>
@@ -83,6 +85,11 @@ const PatientDetailPage = ({ params }: Props) => {
             <h3 className="font-semibold text-gray-700">Email/Mobile</h3>
             <p className="text-gray-600">{patient.emailOrMobile || patient.contactNumber}</p>
           </div>
+          {doctorUser && (
+            <button onClick={() => setIsEditing(true)} className="w-full mt-4 px-4 py-2 bg-yellow-500 text-white rounded-md hover:bg-yellow-600">
+              Edit Details
+            </button>
+          )}
         </div>
       </aside>
 
@@ -106,6 +113,10 @@ const PatientDetailPage = ({ params }: Props) => {
           <MedicalInfoManager patient={patient} />
         ) : null}
       </div>
+
+      {isEditing && (
+        <EditPatientForm patient={patient} onClose={() => setIsEditing(false)} />
+      )}
     </div>
   );
 };

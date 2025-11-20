@@ -146,6 +146,23 @@ app.get('/api/patients/:id', protect, async (req, res) => {
   }
 });
 
+// UPDATE a patient's core details
+app.put('/api/patients/:id', protect, async (req, res) => {
+  try {
+    const updatedPatient = await Patient.findOneAndUpdate(
+      { id: req.params.id },
+      req.body,
+      { new: true } // This option returns the document after it has been updated
+    );
+    if (!updatedPatient) {
+      return res.status(404).json({ message: 'Patient not found' });
+    }
+    res.json(updatedPatient);
+  } catch (error) {
+    res.status(400).json({ message: 'Failed to update patient', error: error.message });
+  }
+});
+
 // UPDATE a patient's medical info (for symptoms, diagnoses, etc.)
 app.post('/api/patients/:patientId/:infoType', protect, async (req, res) => {
   const { patientId, infoType } = req.params;
