@@ -48,7 +48,7 @@ app.post('/api/doctor/register', async (req, res) => {
     const hashedPassword = await bcrypt.hash(password, 10); // 10 is the salt rounds
 
     const newDoctor = new Doctor({
-      id: `doc_${Date.now()}`,
+      id: `doc_${Date.now()}`, name, 
       email,
       password: hashedPassword,
     });
