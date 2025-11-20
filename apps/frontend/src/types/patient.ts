@@ -1,3 +1,4 @@
+import { Appointment } from './appointment';
 import { Symptom } from './symptom';
 import { Diagnosis } from './diagnosis';
 import { Bill } from './bill';
@@ -16,7 +17,7 @@ export interface Patient {
 
   // New fields for tracking medical information
   symptoms?: Symptom[];
-  appointments?: Appointment[];
+  appointments?: Appointment[]; // This is the crucial missing property
   diagnoses?: Diagnosis[];
   bills?: Bill[];
   prescriptions?: Prescription[];
