@@ -20,8 +20,8 @@ export default function DoctorRegistrationPage() {
     setMessage('');
 
     try {
-      const responseMessage = await registerDoctor(name, email, password, registrationCode); // Corrected function call
-      setMessage(responseMessage);
+      await registerDoctor(name, email, password, registrationCode);
+      // Redirection is now handled by the AuthContext, so no message is needed here.
     } catch (err: any) {
       setError(err.message || 'An unexpected error occurred.');
     }
