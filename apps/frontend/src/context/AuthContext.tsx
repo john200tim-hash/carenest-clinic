@@ -61,7 +61,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     localStorage.setItem('doctorEmail', user.email);
     localStorage.setItem('doctorId', user.id);
     localStorage.setItem('doctorName', user.name);
-    router.push('/patients'); // Redirect to the main doctor page
+    router.push('/doctors/dashboard'); // Redirect to the new dashboard
   };
 
   const loginDoctor = async (email: string, password: string) => {
@@ -84,7 +84,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     localStorage.setItem('doctorEmail', user.email); // Renamed localStorage key
     localStorage.setItem('doctorId', user.id); // Renamed localStorage key
     localStorage.setItem('doctorName', user.name); // Renamed localStorage key
-    router.push('/patients'); // Redirect to patient list after login
+    router.push('/doctors/dashboard'); // Redirect to the new dashboard
   };
 
   const logoutDoctor = () => {
