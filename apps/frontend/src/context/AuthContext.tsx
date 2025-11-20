@@ -68,7 +68,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       throw new Error(data.message || 'Login failed.');
     }
 
-    const user: AdminUser = { email, token: data.token };
+    const user: AdminUser = { id: data.id, name: data.name, email, token: data.token };
     setAdminUser(user);
     localStorage.setItem('adminToken', user.token);
     localStorage.setItem('adminEmail', user.email);
