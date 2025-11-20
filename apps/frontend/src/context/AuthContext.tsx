@@ -12,7 +12,7 @@ interface DoctorUser {
 
 interface AuthContextType {
   doctorUser: DoctorUser | null;
-  registerDoctor: (name: string, email: string, password: string, registrationCode: string) => Promise<string>;
+  registerDoctor: (name: string, email: string, password: string, registrationCode: string) => Promise<void>;
   loginDoctor: (email: string, password: string) => Promise<void>;
   logoutDoctor: () => void;
   loading: boolean;
@@ -31,17 +31,18 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   useEffect(() => {
     // Check for a token in local storage on initial load
-    const token = localStorage.getItem('adminToken');
-    const id = localStorage.getItem('adminId');
-    const name = localStorage.getItem('adminName');
-    const email = localStorage.getItem('adminEmail');
-    if (token && email) {
+    const token = localStorage.getItem('doctorToken');
+    const id = localStorage.getItem('doctorId');
+    const name = localStorage.getItem('doctorName');
+    const email = localStorage.getItem('doctorEmail');
+    // Ensure ALL required fields are present before setting the user
+    if (token && id && name && email) {
       setDoctorUser({ id, name, email, token });
     }
     setLoading(false);
   }, []);
 
-  const registerDoctor = async (name: string, email: string, password: string, registrationCode: string): Promise<string> => {
+  const registerDoctor = async (name: string, email: string, password: string, registrationCode: string): Promise<void> => {
     const response = await fetch(`${API_BASE_URL}/api/doctor/register`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -54,8 +55,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       throw new Error(data.message || 'Registration failed.');
     }
 
-     localStorage.setItem('adminEmail', email);
-    return data.message; // e.g., "Registration successful. Please log in."
+    const user: DoctorUser = { id: data.id, name: data.name, email, token: data.token };
+    setDoctorUser(user);
+    localStorage.setItem('doctorToken', user.token);
+    localStorage.setItem('doctorEmail', user.email);
+    localStorage.setItem('doctorId', user.id);
+    localStorage.setItem('doctorName', user.name);
+    router.push('/doctors/dashboard');
   };
 
   const loginDoctor = async (email: string, password: string) => {
@@ -72,17 +78,21 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       throw new Error(data.message || 'Login failed.');
     }
 
-    const user: AdminUser = { id: data.id, name: data.name, email, token: data.token };
+    const user: DoctorUser = { id: data.id, name: data.name, email, token: data.token };
     setDoctorUser(user);
-    localStorage.setItem('adminToken', user.token);
-    localStorage.setItem('adminEmail', user.email);
-    router.push('/patients'); // Redirect to patient list after login
+    localStorage.setItem('doctorToken', user.token);
+    localStorage.setItem('doctorEmail', user.email);
+    localStorage.setItem('doctorId', user.id);
+    localStorage.setItem('doctorName', user.name);
+    router.push('/doctors/dashboard');
   };
 
   const logoutDoctor = () => {
     setDoctorUser(null);
-    localStorage.removeItem('adminToken');
-    localStorage.removeItem('adminEmail');
+    localStorage.removeItem('doctorToken');
+    localStorage.removeItem('doctorEmail');
+    localStorage.removeItem('doctorId');
+    localStorage.removeItem('doctorName');
     router.push('/doctors/login');
   };
 
