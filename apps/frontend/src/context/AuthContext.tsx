@@ -12,7 +12,7 @@ interface DoctorUser {
 
 interface AuthContextType { // Renamed from AdminUser to DoctorUser
   doctorUser: DoctorUser | null;
-  registerDoctor: (name: string, email: string, password: string, registrationCode: string) => Promise<string>;
+  registerDoctor: (name: string, email: string, password: string, registrationCode: string) => Promise<void>;
   loginDoctor: (email: string, password: string) => Promise<void>;
   logoutDoctor: () => void;
   loading: boolean;
@@ -48,13 +48,21 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       body: JSON.stringify({ name, email, password, registrationCode }),
     });
 
-    const data = await response.json();
 
+    const data = await response.json();
     if (!response.ok) {
+
       throw new Error(data.message || 'Registration failed.');
     }
 
-    return data.message; // e.g., "Registration successful. Please log in."
+    // --- FIX: Handle automatic login after registration ---
+    const user: DoctorUser = { id: data.id, name: data.name, email, token: data.token };
+    setDoctorUser(user);
+    localStorage.setItem('doctorToken', user.token);
+    localStorage.setItem('doctorEmail', user.email);
+    localStorage.setItem('doctorId', user.id);
+    localStorage.setItem('doctorName', user.name);
+    router.push('/patients'); // Redirect to the main doctor page
   };
 
   const loginDoctor = async (email: string, password: string) => {
