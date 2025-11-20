@@ -5,6 +5,7 @@ const PatientSchema = new mongoose.Schema({
   name: { type: String, required: true },
   dateOfBirth: { type: Date, required: true },
   gender: { type: String, required: true },
+  emailOrMobile: { type: String, required: true, unique: true }, // Add this field
   contactInfo: { type: String, required: true },
   // Add other fields from your Patient type here
   // e.g., medicalHistory, appointments, etc.
