@@ -8,6 +8,7 @@ export interface Patient {
   name: string;
   dateOfBirth: Date;
   gender: string;
+  emailOrMobile?: string;
   contactNumber: string;
   address: string;
   medicalHistory?: string;
