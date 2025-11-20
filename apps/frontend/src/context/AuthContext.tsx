@@ -12,7 +12,7 @@ interface AdminUser {
 
 interface AuthContextType {
   adminUser: AdminUser | null;
-  registerDoctor: (email: string, password: string, registrationCode: string) => Promise<string>;
+  registerDoctor: (name: string, email: string, password: string, registrationCode: string) => Promise<string>;
   loginDoctor: (email: string, password: string) => Promise<void>;
   logoutDoctor: () => void;
   loading: boolean;
