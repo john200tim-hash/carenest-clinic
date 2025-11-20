@@ -152,7 +152,7 @@ export const PatientProvider = ({ children }: PatientProviderProps) => { // Rena
         throw new Error(`Failed to add ${infoType}`);
       }
       // Refetch all patients to get the updated data. In a real app, you might just update the single patient state.
-      await fetchPatients();
+    await fetchPatients(); // This will trigger a re-render with updated patient data
     } catch (err: any) {
       setError(err.message);
       throw err;

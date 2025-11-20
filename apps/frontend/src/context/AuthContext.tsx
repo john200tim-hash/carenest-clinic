@@ -36,7 +36,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     const name = localStorage.getItem('doctorName');
     const email = localStorage.getItem('doctorEmail');
     if (token && id && name && email) {
-      setDoctorUser({ id, name, email, token });
+      setDoctorUser({ id, name, email, token }); // Ensure all properties are set
     }
     setLoading(false);
   }, []);
@@ -55,8 +55,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       throw new Error(data.message || 'Registration failed.');
     }
 
-    // --- FIX: Handle automatic login after registration ---
-    const user: DoctorUser = { id: data.doctor.id, name: data.doctor.name, email: data.doctor.email, token: data.token };
+    // --- FIX: Handle automatic login after registration (data structure from backend) ---
+    const user: DoctorUser = { id: data.id, name: data.name, email: data.email, token: data.token };
     setDoctorUser(user);
     localStorage.setItem('doctorToken', user.token);
     localStorage.setItem('doctorEmail', user.email);
@@ -79,7 +79,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       throw new Error(data.message || 'Login failed.');
     }
 
-    const user: DoctorUser = { id: data.id, name: data.name, email, token: data.token }; // Use DoctorUser
+    const user: DoctorUser = { id: data.id, name: data.name, email: data.email, token: data.token }; // Ensure all properties are set
     setDoctorUser(user); // Use setDoctorUser
     localStorage.setItem('doctorToken', user.token); // Renamed localStorage key
     localStorage.setItem('doctorEmail', user.email); // Renamed localStorage key

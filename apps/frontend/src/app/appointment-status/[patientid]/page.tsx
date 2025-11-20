@@ -20,17 +20,23 @@ export default function AppointmentStatusPage({ params }: Props) {
       // This is a public page, so we don't need auth headers
       // In a real app, you might have a public endpoint or a different auth method
       const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL;
+      setLoading(true);
+      setError(null);
       try {
-        // We can't fetch a single patient without auth, so we'll just display the ID for now.
-        // A real implementation would need a public endpoint to fetch basic patient data by ID.
-        // For now, we'll simulate fetching the name from local storage if available.
-        const patientName = localStorage.getItem('newPatientName');
-        if (patientName) {
-          setPatient({ name: patientName, id: params.patientId } as Patient);
+        const response = await fetch(`${API_BASE_URL}/api/public/patients/${params.patientId}`);
+        if (!response.ok) {
+          throw new Error('Failed to fetch patient status.');
         }
+        const data = await response.json();
 
-        // Fetch appointments (assuming a public endpoint exists for this, which it doesn't yet)
-        // For now, we'll just show the "awaiting" message.
+        setPatient({
+          id: data.id,
+          name: data.name,
+          // Fill in other required Patient fields with defaults or from data if available
+          dateOfBirth: new Date(), gender: 'N/A', contactNumber: 'N/A', address: 'N/A'
+        });
+        setAppointments(data.appointments.map((appt: any) => ({ ...appt, date: new Date(appt.date) })));
+
 
       } catch (err: any) {
         setError(err.message);
@@ -51,7 +57,7 @@ export default function AppointmentStatusPage({ params }: Props) {
         <div className="flex justify-between items-start mb-6">
           <div>
             <h1 className="text-3xl font-bold text-gray-800">Appointment Status</h1>
-            <p className="text-lg text-gray-600">
+            <p className="text-lg text-gray-600"> 
               Thank you, <span className="font-semibold">{patient?.name || 'Patient'}</span>. Your request has been received.
             </p>
           </div>
@@ -69,7 +75,20 @@ export default function AppointmentStatusPage({ params }: Props) {
             <h3 className="font-semibold text-gray-700">Your Patient ID</h3>
             <p className="font-mono text-2xl text-indigo-600 tracking-wider">{params.patientId}</p>
           </div>
-          <div className="p-4 bg-blue-50 border-l-4 border-blue-500">
+
+          <div className="p-4 border rounded-lg shadow-sm bg-white">
+            <h3 className="text-xl font-semibold mb-4 text-gray-700">Your Appointments</h3>
+            {appointments.length > 0 ? (
+              <ul className="list-disc list-inside space-y-2">
+                {appointments.map(appt => (
+                  <li key={appt.id}><strong>{formatDate(new Date(appt.date))} at {appt.time}</strong> for "{appt.reason}" (Status: <span className="capitalize">{appt.status}</span>)</li>
+                ))}
+              </ul>
+            ) : (
+              <p className="text-gray-500">No appointments found yet.</p>
+            )}
+          </div>
+          <div className="p-4 bg-blue-50 border-l-4 border-blue-500 mt-4">
             <h3 className="font-semibold text-blue-800">Treatment Overview</h3>
             <p className="text-blue-700">Awaiting submission from doctor. Please check back later.</p>
           </div>
