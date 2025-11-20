@@ -4,14 +4,14 @@ import { createContext, useContext, useState, ReactNode, useEffect } from 'react
 import { useRouter } from 'next/navigation';
 
 interface AdminUser {
-  id: string;
-  name: string;
-  email: string;
-  token: string;
+  id: string; // Doctor's ID
+  name: string; // Doctor's Name
+  email: string; // Doctor's Email
+  token: string; // Doctor's JWT
 }
 
-interface AuthContextType {
-  adminUser: AdminUser | null;
+interface AuthContextType { // Renamed from AdminUser to DoctorUser
+  doctorUser: DoctorUser | null;
   registerDoctor: (name: string, email: string, password: string, registrationCode: string) => Promise<string>;
   loginDoctor: (email: string, password: string) => Promise<void>;
   logoutDoctor: () => void;
@@ -19,10 +19,10 @@ interface AuthContextType {
   error: string | null;
 }
 
-const AuthContext = createContext<AuthContextType | undefined>(undefined);
+const AuthContext = createContext<AuthContextType | undefined>(undefined); // Renamed from AdminUser to DoctorUser
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
-  const [adminUser, setAdminUser] = useState<AdminUser | null>(null);
+  const [doctorUser, setDoctorUser] = useState<DoctorUser | null>(null); // Renamed from adminUser to doctorUser
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const router = useRouter();
@@ -36,7 +36,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     const name = localStorage.getItem('adminName');
     const email = localStorage.getItem('adminEmail');
     if (token && email) {
-      setAdminUser({ email, token });
+      setDoctorUser({ id, name, email, token }); // Use DoctorUser and setDoctorUser
     }
     setLoading(false);
   }, []);
@@ -72,22 +72,26 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       throw new Error(data.message || 'Login failed.');
     }
 
-    const user: AdminUser = { id: data.id, name: data.name, email, token: data.token };
-    setAdminUser(user);
-    localStorage.setItem('adminToken', user.token);
-    localStorage.setItem('adminEmail', user.email);
+    const user: DoctorUser = { id: data.id, name: data.name, email, token: data.token }; // Use DoctorUser
+    setDoctorUser(user); // Use setDoctorUser
+    localStorage.setItem('doctorToken', user.token); // Renamed localStorage key
+    localStorage.setItem('doctorEmail', user.email); // Renamed localStorage key
+    localStorage.setItem('doctorId', user.id); // Renamed localStorage key
+    localStorage.setItem('doctorName', user.name); // Renamed localStorage key
     router.push('/patients'); // Redirect to patient list after login
   };
 
   const logoutDoctor = () => {
-    setAdminUser(null);
-    localStorage.removeItem('adminToken');
-    localStorage.removeItem('adminEmail');
+    setDoctorUser(null); // Use setDoctorUser
+    localStorage.removeItem('doctorToken'); // Renamed localStorage key
+    localStorage.removeItem('doctorEmail'); // Renamed localStorage key
+    localStorage.removeItem('doctorId'); // Renamed localStorage key
+    localStorage.removeItem('doctorName'); // Renamed localStorage key
     router.push('/doctors/login');
   };
 
-  const value: AuthContextType = {
-    adminUser,
+  const value: AuthContextType = { // Renamed from AdminUser to DoctorUser
+    doctorUser,
     registerDoctor,
     loginDoctor,
     logoutDoctor,

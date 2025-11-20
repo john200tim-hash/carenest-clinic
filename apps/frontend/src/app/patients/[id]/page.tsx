@@ -13,7 +13,7 @@ interface Props {
 }
 
 const PatientDetailPage = ({ params }: Props) => {
-  const { adminUser } = useAuth(); // Check if a doctor is logged in
+  const { doctorUser } = useAuth(); // Use doctorUser
   const { getAuthHeaders } = usePatients(); // Get the headers function from the context
   const [patient, setPatient] = useState<Patient | null>(null);
   const [appointments, setAppointments] = useState<Appointment[]>([]);
@@ -23,15 +23,13 @@ const PatientDetailPage = ({ params }: Props) => {
   useEffect(() => {
     const fetchPatient = async () => {
       // Definitive Fix: Do not attempt to fetch data until the user is authenticated.
-      if (!adminUser?.token) {
+      if (!doctorUser?.token) { // Use doctorUser
         // You can optionally set an error or just wait. Returning here is key.
         return;
       }
 
       try {
         setLoading(true);
-        // Determine which endpoint to use based on who is logged in
-        const isDoctor = !!adminUser;
         // The API URL now comes from the environment variable
         const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL;
         const url = `${API_BASE_URL}/api/patients/${params.id}`;
@@ -119,7 +117,7 @@ const PatientDetailPage = ({ params }: Props) => {
         </div>
 
         {/* Medical Information Sections - Only show management tools if a doctor is logged in */}
-        {adminUser ? (
+        {doctorUser ? ( // Use doctorUser
           <div className="space-y-8">
             <MedicalInfoManager patient={patient} infoType="symptoms" />
             <MedicalInfoManager patient={patient} infoType="diagnoses" />

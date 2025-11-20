@@ -1,28 +1,25 @@
 'use client';
 import { createContext, useContext, useState, ReactNode, useEffect } from 'react';
-import { Patient } from '@/types/patient';
-import { useAuth } from './AuthContext';
+import { Patient } from '@/types/patient'; // Import your Patient type
+import { useAuth } from './AuthContext'; // Import useAuth for token
 
 interface PatientContextType {
   patients: Patient[];
-  loading: boolean;
-  error: string | null;
   addPatient: (patient: Omit<Patient, 'id'>) => Promise<void>;
   updatePatient: (patient: Patient) => Promise<void>;
   deletePatient: (id: string) => Promise<void>;
   getPatientById: (id: string) => Promise<Patient | null>;
   addMedicalInfo: (patientId: string, infoType: string, data: any) => Promise<void>;
-  getAuthHeaders: () => Record<string, string>; // Expose the headers function
 }
+
+const PatientContext = createContext<PatientContextType | undefined>(undefined);
 
 interface PatientProviderProps {
   children: ReactNode;
 }
 
-const PatientContext = createContext<PatientContextType | undefined>(undefined);
-
-export const PatientProvider = ({ children }: PatientProviderProps) => {
-  const { adminUser } = useAuth();
+export const PatientProvider = ({ children }: PatientProviderProps) => { // Renamed from AdminUser to DoctorUser
+  const { doctorUser } = useAuth(); // Use doctorUser
   const [patients, setPatients] = useState<Patient[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -34,14 +31,14 @@ export const PatientProvider = ({ children }: PatientProviderProps) => {
     const headers: Record<string, string> = {
       'Content-Type': 'application/json',
     };
-    if (adminUser?.token) {
-      headers['Authorization'] = `Bearer ${adminUser.token}`;
+    if (doctorUser?.token) { // Use doctorUser
+      headers['Authorization'] = `Bearer ${doctorUser.token}`; // Use doctorUser
     }
     return headers;
   };
 
   const fetchPatients = async () => {
-    if (!adminUser?.token) {
+    if (!doctorUser?.token) { // Use doctorUser
       setLoading(false);
       return; // Don't fetch if not authenticated
     }
@@ -55,6 +52,7 @@ export const PatientProvider = ({ children }: PatientProviderProps) => {
         throw new Error('Failed to fetch patients');
       }
       const data: Patient[] = await response.json();
+      // Convert date strings from backend to Date objects
       const patientsWithDates = data.map(p => ({
         ...p,
         dateOfBirth: new Date(p.dateOfBirth),
@@ -69,14 +67,14 @@ export const PatientProvider = ({ children }: PatientProviderProps) => {
 
   useEffect(() => {
     fetchPatients();
-  }, [adminUser?.token]);
+  }, [adminUser?.token]); // Refetch when adminUser token changes
 
   const addPatient = async (patient: Omit<Patient, 'id'>) => {
     try {
       const response = await fetch(`${API_BASE_URL}/patients`, {
         method: 'POST',
         headers: getAuthHeaders(),
-        body: JSON.stringify({ ...patient, dateOfBirth: patient.dateOfBirth.toISOString() }),
+        body: JSON.stringify({ ...patient, dateOfBirth: patient.dateOfBirth.toISOString() }), // Send date as ISO string
       });
       if (!response.ok) {
         throw new Error('Failed to add patient');
@@ -150,6 +148,7 @@ export const PatientProvider = ({ children }: PatientProviderProps) => {
       if (!response.ok) {
         throw new Error(`Failed to add ${infoType}`);
       }
+      // Refetch all patients to get the updated data. In a real app, you might just update the single patient state.
       await fetchPatients();
     } catch (err: any) {
       setError(err.message);
@@ -159,14 +158,13 @@ export const PatientProvider = ({ children }: PatientProviderProps) => {
 
   const value: PatientContextType = {
     patients,
-    loading,
-    error,
     addPatient,
     updatePatient,
     deletePatient,
     getPatientById,
     addMedicalInfo,
-    getAuthHeaders, // Provide the function through the context
+    loading,
+    error,
   };
 
   return (
