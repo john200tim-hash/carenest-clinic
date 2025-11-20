@@ -54,7 +54,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       throw new Error(data.message || 'Registration failed.');
     }
 
-     localStorage.setItem('adminEmail', email);
+     localStorage.setItem('doctorEmail', email);
     return data.message; // e.g., "Registration successful. Please log in."
   };
 
