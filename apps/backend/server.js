@@ -6,7 +6,7 @@ const jwt = require('jsonwebtoken');
 
 // --- Mongoose Models ---
 // We need to define the Doctor model schema to interact with the database.
-const DoctorSchema = new mongoose.Schema({ id: String, email: { type: String, required: true, unique: true }, password: { type: String, required: true } });
+const DoctorSchema = new mongoose.Schema({ id: String, name: String, email: { type: String, required: true, unique: true }, password: { type: String, required: true } });
 const Doctor = mongoose.model('Doctor', DoctorSchema);
 const Patient = require('./models/Patient');
 const Appointment = require('./models/Appointment');
@@ -29,7 +29,7 @@ app.use(express.json());
 const REGISTRATION_CODE = 'JOHN200TIM#'; // Keep your registration code secure
 
 app.post('/api/doctor/register', async (req, res) => {
-  const { email, password, registrationCode } = req.body;
+  const { name, email, password, registrationCode } = req.body;
 
   if (registrationCode !== REGISTRATION_CODE) {
     return res.status(400).json({ message: 'Invalid registration code.' });

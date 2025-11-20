@@ -4,6 +4,8 @@ import { createContext, useContext, useState, ReactNode, useEffect } from 'react
 import { useRouter } from 'next/navigation';
 
 interface AdminUser {
+  id: string;
+  name: string;
   email: string;
   token: string;
 }
