@@ -1,6 +1,8 @@
 export interface Diagnosis {
   id: string;
   condition: string;
-  dateDiagnosed: Date;
+  date: Date;
   notes: string;
 }
+
+export {};
