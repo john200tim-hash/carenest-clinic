@@ -6,22 +6,21 @@ import { Appointment } from '@/types/appointment';
 import { formatDate } from '@/lib/formatDate';
 
 const DoctorAppointmentsPage = () => {
-  const { adminUser } = useAuth();
+ const { doctorUser } = useAuth(); // Use doctorUser
   const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchAppointments = async () => {
-      if (!adminUser?.token) return;
-
+    if (!doctorUser?.token) return; // Use doctorUser
       try {
         setLoading(true);
         const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL;
-        const response = await fetch(`${API_BASE_URL}/api/doctors/${adminUser.id}/appointments`, {
+        const response = await fetch(`${API_BASE_URL}/api/doctors/${doctorUser.id}/appointments`, {
           headers: {
             'Content-Type': 'application/json',
-            'Authorization': `Bearer ${adminUser.token}`
+            'Authorization': `Bearer ${doctorUser.token}`
           }
         });
 
@@ -39,7 +38,7 @@ const DoctorAppointmentsPage = () => {
     };
 
     fetchAppointments();
-  }, [adminUser]);
+  }, [doctorUser]);
 
   if (loading) return <p>Loading appointments...</p>;
   if (error) return <p className="text-red-500">Error: {error}</p>;
