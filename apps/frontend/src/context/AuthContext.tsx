@@ -3,7 +3,7 @@
 import { createContext, useContext, useState, ReactNode, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 
-interface AdminUser {
+interface DoctorUser {
   id: string; // Doctor's ID
   name: string; // Doctor's Name
   email: string; // Doctor's Email
