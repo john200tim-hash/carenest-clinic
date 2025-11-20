@@ -1,0 +1,24 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+body {
+  @apply bg-gray-50;
+}
+
+/* Print-specific styles */
+@media print {
+  body {
+    background-color: white;
+  }
+  /* Hide elements that shouldn't be printed */
+  .print-hidden, header, footer {
+    display: none !important;
+  }
+  /* Ensure the main content takes up the full width */
+  main {
+    width: 100%;
+    margin: 0;
+    padding: 0;
+  }
+}
