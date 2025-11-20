@@ -3,6 +3,7 @@ import { Diagnosis } from './diagnosis';
 import { Bill } from './bill';
 import { Prescription } from './prescription';
 
+
 export interface Patient {
   id: string;
   name: string;
