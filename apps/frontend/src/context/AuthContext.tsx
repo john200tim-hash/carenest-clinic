@@ -32,6 +32,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   useEffect(() => {
     // Check for a token in local storage on initial load
     const token = localStorage.getItem('adminToken');
+    const id = localStorage.getItem('adminId');
+    const name = localStorage.getItem('adminName');
     const email = localStorage.getItem('adminEmail');
     if (token && email) {
       setAdminUser({ email, token });
