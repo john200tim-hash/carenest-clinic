@@ -6,14 +6,7 @@ import { Patient } from '@/types/patient';
 import { formatDate } from '@/lib/formatDate';
 import MedicalInfoManager from '@/components/MedicalInfoManager';
 import { Appointment } from '@/types/appointment';
-// Inside your page.tsx component...
 import { usePatients } from '@/context/PatientContext'; // Import the context hook
-
-const { getAuthHeaders } = usePatients(); // Get the headers function from the context
-
-// ... some useEffect or function
-const response = await fetch(url, { headers: getAuthHeaders() }); // THIS IS THE CORRECT CODE
-// ...
 
 interface Props {
   params: { id: string };
@@ -21,6 +14,7 @@ interface Props {
 
 const PatientDetailPage = ({ params }: Props) => {
   const { adminUser } = useAuth(); // Check if a doctor is logged in
+  const { getAuthHeaders } = usePatients(); // Get the headers function from the context
   const [patient, setPatient] = useState<Patient | null>(null);
   const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [loading, setLoading] = useState(true);
@@ -32,10 +26,11 @@ const PatientDetailPage = ({ params }: Props) => {
         setLoading(true);
         // Determine which endpoint to use based on who is logged in
         const isDoctor = !!adminUser;
-        const url = isDoctor ? `/api/patients/${params.id}` : `/api/patients/public/${params.id}`;
-        const headers = isDoctor ? { 'Authorization': `Bearer ${adminUser.token}` } : {};
+        // The API URL now comes from the environment variable
+        const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL;
+        const url = `${API_BASE_URL}/api/patients/${params.id}`;
 
-        const response = await fetch(url, { headers });
+        const response = await fetch(url, { headers: getAuthHeaders() });
 
         if (!response.ok) {
           throw new Error('Patient not found or failed to fetch data.');
@@ -44,7 +39,7 @@ const PatientDetailPage = ({ params }: Props) => {
         fetchedPatient.dateOfBirth = new Date(fetchedPatient.dateOfBirth);
 
         // Fetch appointments for this patient
-        const apptResponse = await fetch(`/api/patients/${params.id}/appointments`);
+        const apptResponse = await fetch(`${API_BASE_URL}/api/patients/${params.id}/appointments`, { headers: getAuthHeaders() });
         if (apptResponse.ok) {
           const fetchedAppointments: Appointment[] = await apptResponse.json();
           setAppointments(fetchedAppointments.map(a => ({...a, date: new Date(a.date)})));
