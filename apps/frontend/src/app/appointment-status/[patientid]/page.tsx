@@ -103,7 +103,7 @@ export default function AppointmentStatusPage({ params }: Props) {
             )}
 
             {activeTab === 'records' && (
-              <PatientReceipt patient={patient} />
+              <PatientReceipt patient={patient!} /> {/* Use non-null assertion */}
             )}
           </div>
         </div>

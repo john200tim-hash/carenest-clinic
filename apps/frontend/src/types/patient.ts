@@ -1,9 +1,8 @@
-import { Appointment } from './appointment';
+import { Appointment } from './appointment'; // Ensure this import is present
 import { Symptom } from './symptom';
 import { Diagnosis } from './diagnosis';
 import { Bill } from './bill';
 import { Prescription } from './prescription';
-
 
 export interface Patient {
   id: string;
@@ -17,7 +16,7 @@ export interface Patient {
 
   // New fields for tracking medical information
   symptoms?: Symptom[];
-  appointments?: Appointment[]; // This is the crucial missing property
+  appointments?: Appointment[]; // <--- THIS IS THE MISSING PROPERTY
   diagnoses?: Diagnosis[];
   bills?: Bill[];
   prescriptions?: Prescription[];
