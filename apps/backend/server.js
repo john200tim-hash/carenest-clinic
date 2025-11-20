@@ -85,7 +85,7 @@ app.post('/api/doctor/login', async (req, res) => {
     // Create and sign a JWT
     const token = jwt.sign({ id: doctor.id, email: doctor.email }, process.env.JWT_SECRET, { expiresIn: '1d' });
 
-    res.json({ message: 'Login successful', token, name: doctor.name });
+    res.json({ message: 'Login successful', token });
 
   } catch (error) {
     console.error('Login Error:', error);
@@ -118,6 +118,144 @@ app.get('/api/patients', protect, async (req, res) => {
     res.json(patients);
   } catch (error) {
     res.status(500).json({ message: 'Failed to fetch patients' });
+  }
+});
+
+// --- Protected Patient CRUD Routes (for Doctors) ---
+
+// GET a single patient by ID
+app.get('/api/patients/:id', protect, async (req, res) => {
+  try {
+    const patient = await Patient.findOne({ id: req.params.id });
+    if (!patient) {
+      return res.status(404).json({ message: 'Patient not found' });
+    }
+    res.json(patient);
+  } catch (error) {
+    res.status(500).json({ message: 'Failed to fetch patient' });
+  }
+});
+
+// UPDATE a patient's medical info (for symptoms, diagnoses, etc.)
+app.post('/api/patients/:patientId/:infoType', protect, async (req, res) => {
+  const { patientId, infoType } = req.params;
+  const data = req.body;
+
+  try {
+    const patient = await Patient.findOne({ id: patientId });
+    if (!patient) {
+      return res.status(404).json({ message: 'Patient not found' });
+    }
+
+    // Dynamically push to the correct array in the patient document
+    patient[infoType] = patient[infoType] || [];
+    patient[infoType].push({ id: `${infoType.slice(0, 4)}_${Date.now()}`, ...data });
+
+    await patient.save();
+    res.status(201).json(patient);
+  } catch (error) {
+    console.error(`Error adding ${infoType}:`, error);
+    res.status(500).json({ message: `Failed to add ${infoType}` });
+  }
+});
+
+// --- Protected Appointment Routes (for Doctors) ---
+
+// GET all appointments for a specific patient
+app.get('/api/patients/:id/appointments', protect, async (req, res) => {
+  try {
+    const appointments = await Appointment.find({ patientId: req.params.id });
+    res.json(appointments);
+  } catch (error) {
+    res.status(500).json({ message: 'Failed to fetch appointments' });
+  }
+});
+
+// --- Protected Appointment Routes (for Doctors) ---
+
+// GET all appointments for a specific doctor
+app.get('/api/doctors/:doctorId/appointments', protect, async (req, res) => {
+  try {
+    const appointments = await Appointment.find({ doctorId: req.params.doctorId });
+    res.json(appointments);
+  } catch (error) {
+    res.status(500).json({ message: 'Failed to fetch appointments' });
+  }
+});
+
+// UPDATE appointment status (for doctors)
+app.put('/api/appointments/:appointmentId', protect, async (req, res) => {
+  try {
+    const { appointmentId } = req.params;
+    const { status } = req.body; // Expecting 'status' in the body
+
+    if (!['pending', 'confirmed', 'completed', 'cancelled'].includes(status)) {
+      return res.status(400).json({ message: 'Invalid status value' });
+    }
+
+    const updatedAppointment = await Appointment.findOneAndUpdate(
+      { id: appointmentId },
+      { status },
+      { new: true } // Return the updated document
+    );
+
+    if (!updatedAppointment) {
+      return res.status(404).json({ message: 'Appointment not found' });
+    }
+
+    res.json(updatedAppointment);
+  } catch (error) {
+    console.error('Update Appointment Error:', error);
+    res.status(500).json({ message: 'Failed to update appointment status' });
+  }
+});
+
+
+
+
+
+
+// --- Public Appointment Request Route (for Patients) ---
+
+app.post('/api/appointments/request', async (req, res) => {
+  const { name, emailOrMobile, date, time, reason } = req.body;
+
+  if (!name || !emailOrMobile || !date || !time || !reason) {
+    return res.status(400).json({ message: 'All fields are required.' });
+  }
+
+  try {
+    // Find patient or create a new one
+    let patient = await Patient.findOne({ emailOrMobile });
+    if (!patient) {
+      patient = new Patient({
+        id: `pat_${Date.now()}`,
+        name,
+        emailOrMobile,
+        // Add default/placeholder values for other required fields
+        dateOfBirth: new Date(),
+        gender: 'Not specified',
+        contactNumber: emailOrMobile,
+        address: 'Not specified',
+      });
+      await patient.save();
+    }
+
+    // Create the new appointment
+    const appointment = new Appointment({
+      id: `appt_${Date.now()}`,
+      patientId: patient.id,
+      patientName: patient.name,
+      date, time, reason,
+    });
+    await appointment.save();
+
+    // Return the patient object so the frontend can get the ID
+    res.status(201).json(patient);
+
+  } catch (error) {
+    console.error('Appointment Request Error:', error);
+    res.status(500).json({ message: 'Failed to process appointment request.' });
   }
 });
 
