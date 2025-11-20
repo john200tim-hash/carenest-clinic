@@ -6,7 +6,7 @@ const jwt = require('jsonwebtoken');
 
 // --- Mongoose Models ---
 // We need to define the Doctor model schema to interact with the database.
-const DoctorSchema = new mongoose.Schema({ id: String, name: String, email: { type: String, required: true, unique: true }, password: { type: String, required: true } });
+const DoctorSchema = new mongoose.Schema({ id: String, name: { type: String, required: true }, email: { type: String, required: true, unique: true }, password: { type: String, required: true } });
 const Doctor = mongoose.model('Doctor', DoctorSchema);
 const Patient = require('./models/Patient');
 const Appointment = require('./models/Appointment');
@@ -95,7 +95,7 @@ app.post('/api/doctor/login', async (req, res) => {
     // Create and sign a JWT
     const token = jwt.sign({ id: doctor.id, email: doctor.email }, process.env.JWT_SECRET, { expiresIn: '1d' });
 
-    res.json({ message: 'Login successful', token, id: doctor.id, name: doctor.name || '' });
+    res.json({ message: 'Login successful', token, id: doctor.id, name: doctor.name });
 
   } catch (error) {
     console.error('Login Error:', error);
