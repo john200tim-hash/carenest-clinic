@@ -1,3 +1,4 @@
+import { Appointment } from './appointment';
 import { Symptom } from './symptom';
 import { Diagnosis } from './diagnosis';
 import { Bill } from './bill';
@@ -16,6 +17,7 @@ export interface Patient {
 
   // New fields for tracking medical information
   symptoms?: Symptom[];
+  appointments?: Appointment[];
   diagnoses?: Diagnosis[];
   bills?: Bill[];
   prescriptions?: Prescription[];
