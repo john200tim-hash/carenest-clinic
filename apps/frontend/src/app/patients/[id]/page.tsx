@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { useAuth } from '@/context/AuthContext';
-import { Patient } from '@/types/patient';
+import { Patient } from '@/types/patient'; // This should now import all sub-types
 import { formatDate } from '@/lib/formatDate';
 import MedicalInfoManager from '@/components/MedicalInfoManager';
 import { Appointment } from '@/types/appointment';
@@ -19,7 +19,6 @@ const PatientDetailPage = ({ params }: Props) => {
   const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<'symptoms' | 'diagnoses' | 'prescriptions' | 'bills'>('symptoms');
 
   useEffect(() => {
     const fetchPatient = async () => {
@@ -66,15 +65,6 @@ const PatientDetailPage = ({ params }: Props) => {
   if (error) return <p className="text-red-500">Error: {error}</p>;
   if (!patient) return <p>Patient not found.</p>;
 
-  const TabButton = ({ tabName, label }: { tabName: any, label: string }) => (
-    <button
-      onClick={() => setActiveTab(tabName)}
-      className={`px-4 py-2 text-sm font-medium rounded-md ${activeTab === tabName ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'}`}
-    >
-      {label}
-    </button>
-  );
-
   return (
     <div className="flex gap-8">
       {/* Left Sidebar for Settings */}
@@ -97,7 +87,7 @@ const PatientDetailPage = ({ params }: Props) => {
       </aside>
 
       {/* Main Content Area */}
-      <div id="treatment-overview" className="w-3/4 space-y-6">
+      <div id="treatment-overview" className="w-3/4 space-y-8">
         <div className="flex justify-between items-start">
           <div>
             <h1 className="text-3xl font-bold text-gray-800">Treatment Overview</h1>
@@ -111,22 +101,9 @@ const PatientDetailPage = ({ params }: Props) => {
           </button>
         </div>
 
-        {/* Tab Navigation */}
-        <div className="flex space-x-2 border-b pb-2">
-          <TabButton tabName="symptoms" label="Symptoms" />
-          <TabButton tabName="diagnoses" label="Diagnoses" />
-          <TabButton tabName="prescriptions" label="Prescriptions" />
-          <TabButton tabName="bills" label="Bills" />
-        </div>
-
         {/* Medical Information Sections - Only show management tools if a doctor is logged in */}
         {doctorUser ? ( // Use doctorUser
-          <div className="mt-4">
-            {activeTab === 'symptoms' && <MedicalInfoManager patient={patient} infoType="symptoms" />}
-            {activeTab === 'diagnoses' && <MedicalInfoManager patient={patient} infoType="diagnoses" />}
-            {activeTab === 'prescriptions' && <MedicalInfoManager patient={patient} infoType="prescriptions" />}
-            {activeTab === 'bills' && <MedicalInfoManager patient={patient} infoType="bills" />}
-          </div>
+          <MedicalInfoManager patient={patient} />
         ) : null}
       </div>
     </div>
