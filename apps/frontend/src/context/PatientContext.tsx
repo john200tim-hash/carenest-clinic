@@ -10,6 +10,7 @@ interface PatientContextType {
   deletePatient: (id: string) => Promise<void>;
   getPatientById: (id: string) => Promise<Patient | null>;
   addMedicalInfo: (patientId: string, infoType: string, data: any) => Promise<void>;
+  getAuthHeaders: () => Record<string, string>;
 }
 
 const PatientContext = createContext<PatientContextType | undefined>(undefined);
