@@ -5,6 +5,8 @@ import { useAuth } from './AuthContext'; // Import useAuth for token
 
 interface PatientContextType {
   patients: Patient[];
+  loading: boolean;
+  error: string | null;
   addPatient: (patient: Omit<Patient, 'id'>) => Promise<void>;
   updatePatient: (patient: Patient) => Promise<void>;
   deletePatient: (id: string) => Promise<void>;
