@@ -22,6 +22,12 @@ const PatientDetailPage = ({ params }: Props) => {
 
   useEffect(() => {
     const fetchPatient = async () => {
+      // Definitive Fix: Do not attempt to fetch data until the user is authenticated.
+      if (!adminUser?.token) {
+        // You can optionally set an error or just wait. Returning here is key.
+        return;
+      }
+
       try {
         setLoading(true);
         // Determine which endpoint to use based on who is logged in
