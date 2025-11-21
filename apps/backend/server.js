@@ -30,8 +30,8 @@ app.post('/api/doctor/register', async (req, res) => {
   if (registrationCode !== REGISTRATION_CODE) {
     return res.status(400).json({ message: 'Invalid registration code.' });
   }
-  if (!email || !password) {
-    return res.status(400).json({ message: 'Email and password are required.' });
+  if (!name || !email || !password) {
+    return res.status(400).json({ message: 'Name, email, and password are required.' });
   }
 
   try {
@@ -247,6 +247,14 @@ app.post('/api/appointments/request', async (req, res) => {
     return res.status(400).json({ message: 'All fields are required.' });
   }
   try {
+    // --- DEFINITIVE FIX: Find a doctor to assign the new appointment to ---
+    const doctorResult = await pool.query('SELECT id FROM doctors LIMIT 1');
+    const assignedDoctor = doctorResult.rows[0];
+
+    if (!assignedDoctor) {
+      return res.status(500).json({ message: 'No doctors are available in the system to handle appointments.' });
+    }
+
     const patientResult = await pool.query('SELECT * FROM patients WHERE email_or_mobile = $1', [emailOrMobile]);
     let patient = patientResult.rows[0];
 
@@ -260,8 +268,8 @@ app.post('/api/appointments/request', async (req, res) => {
     }
     const newAppointmentId = `appt_${Date.now()}`;
     await pool.query(
-      'INSERT INTO appointments (id, patient_id, patient_name, date, time, reason) VALUES ($1, $2, $3, $4, $5, $6)',
-      [newAppointmentId, patient.id, patient.name, date, time, reason]
+      'INSERT INTO appointments (id, patient_id, doctor_id, patient_name, date, time, reason) VALUES ($1, $2, $3, $4, $5, $6, $7)',
+      [newAppointmentId, patient.id, assignedDoctor.id, patient.name, date, time, reason]
     );
     res.status(201).json(patient); // Return the patient object as before
   } catch (error) {

@@ -43,8 +43,7 @@ const RequestAppointmentPage = () => {
 
       const patient: Patient = await response.json(); // The backend now returns the patient object
 
-      // Store name for the status page and redirect
-      localStorage.setItem('newPatientName', patient.name);
+      // Redirect to the patient's personal status page
       router.push(`/appointment-status/${patient.id}`);
 
     } catch (err: any) {
