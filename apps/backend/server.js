@@ -3,7 +3,6 @@ const cors = require('cors');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const { Pool } = require('pg');
-const redis = require('redis');
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -16,19 +15,6 @@ const pool = new Pool({
 pool.connect()
   .then(() => console.log('Successfully connected to PostgreSQL'))
   .catch(err => console.error('Connection error', err));
-
-// --- Redis Connection ---
-let redisClient;
-if (process.env.REDIS_URL) {
-  console.log('REDIS_URL found, attempting to connect to Redis...');
-  redisClient = redis.createClient({
-    url: process.env.REDIS_URL
-  });
-  redisClient.on('error', err => console.log('Redis Client Error', err));
-  redisClient.connect().then(() => console.log('Successfully connected to Redis'));
-} else {
-  console.log('REDIS_URL not found. Redis caching will be disabled for local development.');
-}
 
 app.use(cors());
 app.use(express.json());
@@ -138,18 +124,7 @@ app.get('/api/patients', protect, async (req, res) => {
 // --- Protected Patient CRUD Routes (for Doctors) ---
 app.get('/api/patients/:id', protect, async (req, res) => {
   try {
-    // --- Caching Logic ---
-    // Only attempt to use Redis if the client is available and connected
-    if (redisClient && redisClient.isReady) {
-      const cacheKey = `cache:patient:${req.params.id}`;
-      const cachedPatient = await redisClient.get(cacheKey);
-      if (cachedPatient) {
-        console.log(`Serving patient ${req.params.id} from cache.`);
-        return res.json(JSON.parse(cachedPatient));
-      }
-    }
-
-    // 2. If not in cache, get data from PostgreSQL
+    // Fetch patient data directly from PostgreSQL
     const patientResult = await pool.query('SELECT * FROM patients WHERE id = $1', [req.params.id]);
     const patient = patientResult.rows[0];
     if (!patient) {
@@ -166,12 +141,6 @@ app.get('/api/patients/:id', protect, async (req, res) => {
     ]);
 
     const fullPatientData = { ...patient, symptoms, diagnoses, prescriptions, bills, appointments };
-
-    // 3. Save the fresh data to the Redis cache for next time, with a 5-minute TTL (300 seconds)
-    if (redisClient && redisClient.isReady) {
-      const cacheKey = `cache:patient:${req.params.id}`;
-      await redisClient.set(cacheKey, JSON.stringify(fullPatientData), { EX: 300 });
-    }
 
     res.json(fullPatientData);
   } catch (error) {
