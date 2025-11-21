@@ -264,6 +264,38 @@ app.put('/api/appointments/:appointmentId', protect, async (req, res) => {
   }
 });
 
+// --- Doctor Creates Appointment Route ---
+app.post('/api/appointments/doctor-create', protect, async (req, res) => {
+  const { patientId, date, time, reason } = req.body;
+  const doctorId = req.user.id; // Get doctor's ID from the token middleware
+
+  if (!patientId || !date || !time || !reason) {
+    return res.status(400).json({ message: 'Patient, date, time, and reason are required.' });
+  }
+
+  try {
+    const patientResult = await pool.query('SELECT name FROM patients WHERE id = $1', [patientId]);
+    const patient = patientResult.rows[0];
+    if (!patient) {
+      return res.status(404).json({ message: 'Patient not found.' });
+    }
+
+    const newAppointmentId = `appt_${Date.now()}`;
+    const insertResult = await pool.query(
+      'INSERT INTO appointments (id, patient_id, doctor_id, patient_name, date, time, reason, status) VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING *',
+      [newAppointmentId, patientId, doctorId, patient.name, date, time, reason, 'confirmed']
+    );
+
+    const newAppointment = insertResult.rows[0];
+    res.status(201).json(newAppointment);
+
+  } catch (error) {
+    console.error('Doctor Create Appointment Error:', error);
+    res.status(500).json({ message: 'Failed to create appointment.' });
+  }
+});
+
+
 // --- Public Appointment Request Route (for Patients) ---
 app.post('/api/appointments/request', async (req, res) => {
   const { name, emailOrMobile, date, time, reason } = req.body;
