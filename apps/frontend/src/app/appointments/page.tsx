@@ -89,8 +89,6 @@ const DoctorAppointmentsPage = () => {
                 </select>
               </div>
 
- 
-              </div>
             </li>
           ))} 
         </ul>
