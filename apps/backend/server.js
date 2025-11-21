@@ -3,6 +3,7 @@ const cors = require('cors');
 const mongoose = require('mongoose');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
+jwt.verify(token, process.env.JWT_SECRET, (err, user) => { ... });
 
 // --- Mongoose Models ---
 // We need to define the Doctor model schema to interact with the database.
