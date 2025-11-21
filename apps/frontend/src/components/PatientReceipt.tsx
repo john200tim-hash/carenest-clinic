@@ -89,10 +89,10 @@ const PatientReceipt = ({ patient }: { patient: Patient }) => {
       addTable(
         'Billing',
         ['Date', 'Description', 'Amount', 'Status'],
-        bills.map((b) => [
+        bills.map((b: any) => [ // Use any to bypass temporary type mismatch
           formatDate(b.date),
-          b.description,
-          `$${b.amount.toFixed(2)}`,
+          b.item,
+          `$${Number(b.bill).toFixed(2)}`,
           b.status,
         ]),
         currentY
@@ -113,7 +113,7 @@ const PatientReceipt = ({ patient }: { patient: Patient }) => {
       <RecordSection title="Symptoms" items={symptoms} render={item => `${formatDate(new Date(item.date))}: ${item.description} (${item.severity})`} />
       <RecordSection title="Diagnoses" items={diagnoses} render={item => `${formatDate(new Date(item.date))}: ${item.condition} - Notes: ${item.notes}`} />
       <RecordSection title="Prescriptions" items={prescriptions} render={item => `${formatDate(new Date(item.startDate))}: ${item.medication} (${item.dosage})`} />
-      <RecordSection title="Bills" items={bills} render={item => `${formatDate(new Date(item.date))}: ${item.description} - $${item.amount.toFixed(2)} (${item.status})`} />
+      <RecordSection title="Bills" items={bills} render={item => `${formatDate(new Date(item.date))}: ${item.item} - $${Number(item.bill).toFixed(2)} (${item.status})`} />
     </div>
   );
 };

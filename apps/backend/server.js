@@ -1,32 +1,28 @@
 const express = require('express');
 const cors = require('cors');
-const mongoose = require('mongoose');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
-
-// --- Mongoose Models ---
-// We need to define the Doctor model schema to interact with the database.
-const DoctorSchema = new mongoose.Schema({ id: String, name: String, email: { type: String, required: true, unique: true }, password: { type: String, required: true } });
-const Doctor = mongoose.model('Doctor', DoctorSchema);
-const Patient = require('./models/Patient');
-const Appointment = require('./models/Appointment');
+const { Pool } = require('pg');
 
 const app = express();
 const PORT = process.env.PORT || 3001;
 
-// --- Database Connection ---
-// Railway will provide the MONGODB_URI as an environment variable
-mongoose.connect(process.env.MONGODB_URI)
-  .then(() => console.log('Successfully connected to MongoDB'))
+// --- PostgreSQL Database Connection ---
+// The 'pg' library automatically uses the DATABASE_URL environment variable on Railway.
+const pool = new Pool({
+  connectionString: process.env.DATABASE_URL,
+});
+pool.connect()
+  .then(() => console.log('Successfully connected to PostgreSQL'))
   .catch(err => console.error('Connection error', err));
 
-app.use(cors()); // Allow requests from your Vercel frontend
+app.use(cors());
 app.use(express.json());
 
 // --- API Routes ---
 
 // --- Doctor Registration ---
-const REGISTRATION_CODE = 'JOHN200TIM#'; // Keep your registration code secure
+const REGISTRATION_CODE = 'JOHN200TIM#';
 
 app.post('/api/doctor/register', async (req, res) => {
   const { name, email, password, registrationCode } = req.body;
@@ -39,33 +35,28 @@ app.post('/api/doctor/register', async (req, res) => {
   }
 
   try {
-    const existingDoctor = await Doctor.findOne({ email });
+    const existingDoctorResult = await pool.query('SELECT * FROM doctors WHERE email = $1', [email]);
+    const existingDoctor = existingDoctorResult.rows[0];
     if (existingDoctor) {
       return res.status(409).json({ message: 'A doctor with this email is already registered.' });
     }
 
-    // Hash the password before saving
-    const hashedPassword = await bcrypt.hash(password, 10); // 10 is the salt rounds
+    const hashedPassword = await bcrypt.hash(password, 10);
+    const newDoctorId = `doc_${Date.now()}`;
 
-    const newDoctor = new Doctor({
-      id: `doc_${Date.now()}`, name, 
-      email,
-      password: hashedPassword,
-    });
-
-    const savedDoctor = await newDoctor.save();
-
-    // --- FIX: Automatically log in the user by creating a token ---
+    const insertResult = await pool.query(
+      'INSERT INTO doctors (id, name, email, password) VALUES ($1, $2, $3, $4) RETURNING *',
+      [newDoctorId, name, email, hashedPassword]
+    );
+    const savedDoctor = insertResult.rows[0];
     const token = jwt.sign({ id: savedDoctor.id, email: savedDoctor.email }, process.env.JWT_SECRET, { expiresIn: '1d' });
 
-    // Return the token and user info, just like the login route
     res.status(201).json({
       message: 'Registration successful!',
       token,
       id: savedDoctor.id,
       name: savedDoctor.name
     });
-
   } catch (error) {
     console.error('Registration Error:', error);
     res.status(500).json({ message: 'An unexpected error occurred.' });
@@ -81,8 +72,8 @@ app.post('/api/doctor/login', async (req, res) => {
   }
 
   try {
-    // --- FIX: Verify credentials against the database ---
-    const doctor = await Doctor.findOne({ email });
+    const result = await pool.query('SELECT * FROM doctors WHERE email = $1', [email]);
+    const doctor = result.rows[0];
     if (!doctor) {
       return res.status(401).json({ message: 'Invalid credentials' });
     }
@@ -92,11 +83,8 @@ app.post('/api/doctor/login', async (req, res) => {
       return res.status(401).json({ message: 'Invalid credentials' });
     }
 
-    // Create and sign a JWT
     const token = jwt.sign({ id: doctor.id, email: doctor.email }, process.env.JWT_SECRET, { expiresIn: '1d' });
-
     res.json({ message: 'Login successful', token, id: doctor.id, name: doctor.name });
-
   } catch (error) {
     console.error('Login Error:', error);
     res.status(500).json({ message: 'An unexpected error occurred.' });
@@ -108,78 +96,104 @@ const protect = (req, res, next) => {
   const authHeader = req.headers.authorization;
   if (authHeader && authHeader.startsWith('Bearer ')) {
     const token = authHeader.split(' ')[1];
+
+    // --- Live Authentication Logic ---
     jwt.verify(token, process.env.JWT_SECRET, (err, user) => {
       if (err) {
-        return res.status(403).json({ message: 'Token is not valid' }); // Forbidden
+        return res.status(403).json({ message: 'Token is not valid' });
       }
       req.user = user;
       next();
     });
   } else {
-    res.status(401).json({ message: 'Not authorized, no token' }); // Unauthorized
+    res.status(401).json({ message: 'Not authorized, no token' });
   }
 };
 
 // --- Protected Patient Route ---
-// This route is now protected by the 'protect' middleware and fetches real data.
 app.get('/api/patients', protect, async (req, res) => {
   try {
-    const patients = await Patient.find({});
-    res.json(patients);
+    const result = await pool.query('SELECT * FROM patients ORDER BY name');
+    res.json(result.rows);
   } catch (error) {
+    console.error('Fetch Patients Error:', error);
     res.status(500).json({ message: 'Failed to fetch patients' });
   }
 });
 
 // --- Protected Patient CRUD Routes (for Doctors) ---
-
-// GET a single patient by ID
 app.get('/api/patients/:id', protect, async (req, res) => {
   try {
-    const patient = await Patient.findOne({ id: req.params.id });
+    const patientResult = await pool.query('SELECT * FROM patients WHERE id = $1', [req.params.id]);
+    const patient = patientResult.rows[0];
     if (!patient) {
       return res.status(404).json({ message: 'Patient not found' });
     }
-    res.json(patient);
+
+    // Fetch related data from other tables
+    const [symptoms, diagnoses, prescriptions, bills, appointments] = await Promise.all([
+      pool.query('SELECT * FROM symptoms WHERE patient_id = $1', [req.params.id]).then(r => r.rows),
+      pool.query('SELECT * FROM diagnoses WHERE patient_id = $1', [req.params.id]).then(r => r.rows),
+      pool.query('SELECT * FROM prescriptions WHERE patient_id = $1', [req.params.id]).then(r => r.rows),
+      pool.query('SELECT * FROM bills WHERE patient_id = $1', [req.params.id]).then(r => r.rows),
+      pool.query('SELECT * FROM appointments WHERE patient_id = $1', [req.params.id]).then(r => r.rows),
+    ]);
+
+    res.json({ ...patient, symptoms, diagnoses, prescriptions, bills, appointments });
   } catch (error) {
-    res.status(500).json({ message: 'Failed to fetch patient' });
+    res.status(500).json({ message: 'Failed to fetch patient data' });
   }
 });
 
-// UPDATE a patient's core details
 app.put('/api/patients/:id', protect, async (req, res) => {
   try {
-    const updatedPatient = await Patient.findOneAndUpdate(
-      { id: req.params.id },
-      req.body,
-      { new: true } // This option returns the document after it has been updated
+    // This endpoint updates a patient's core demographic information.
+    const { name, dateOfBirth, gender, emailOrMobile, contactNumber, address, medicalHistory } = req.body;
+    const result = await pool.query(
+      'UPDATE patients SET name = $1, date_of_birth = $2, gender = $3, email_or_mobile = $4, contact_number = $5, address = $6, medical_history = $7 WHERE id = $8 RETURNING *',
+      [name, dateOfBirth, gender, emailOrMobile, contactNumber, address, medicalHistory, req.params.id]
     );
-    if (!updatedPatient) {
+    if (result.rowCount === 0) {
       return res.status(404).json({ message: 'Patient not found' });
     }
-    res.json(updatedPatient);
+    res.json(result.rows[0]);
   } catch (error) {
     res.status(400).json({ message: 'Failed to update patient', error: error.message });
   }
 });
 
-// UPDATE a patient's medical info (for symptoms, diagnoses, etc.)
 app.post('/api/patients/:patientId/:infoType', protect, async (req, res) => {
   const { patientId, infoType } = req.params;
   const data = req.body;
+  const newId = `${infoType.slice(0, 4)}_${Date.now()}`;
 
   try {
-    const patient = await Patient.findOne({ id: patientId });
-    if (!patient) {
-      return res.status(404).json({ message: 'Patient not found' });
+    let query, params;
+    switch (infoType) {
+      case 'symptoms':
+        query = 'INSERT INTO symptoms (id, patient_id, description, date, severity) VALUES ($1, $2, $3, $4, $5)';
+        params = [newId, patientId, data.description, data.date, data.severity];
+        break;
+      case 'diagnoses':
+        query = 'INSERT INTO diagnoses (id, patient_id, condition, date, notes) VALUES ($1, $2, $3, $4, $5)';
+        params = [newId, patientId, data.condition, data.date, data.notes];
+        break;
+      case 'prescriptions':
+        query = 'INSERT INTO prescriptions (id, patient_id, medication, dosage, start_date, end_date) VALUES ($1, $2, $3, $4, $5, $6)';
+        params = [newId, patientId, data.medication, data.dosage, data.startDate, data.endDate];
+        break;
+      case 'bills':
+        query = 'INSERT INTO bills (id, patient_id, item, bill, date, status) VALUES ($1, $2, $3, $4, $5, $6)';
+        params = [newId, patientId, data.item, data.bill, data.date, data.status];
+        break;
+      default:
+        return res.status(400).json({ message: 'Invalid medical info type' });
     }
 
-    // Dynamically push to the correct array in the patient document
-    patient[infoType] = patient[infoType] || [];
-    patient[infoType].push({ id: `${infoType.slice(0, 4)}_${Date.now()}`, ...data });
+    await pool.query(query, params);
+    // To keep the response simple, we just confirm success. The frontend will refetch.
+    res.status(201).json({ message: `${infoType} added successfully.` });
 
-    await patient.save();
-    res.status(201).json(patient);
   } catch (error) {
     console.error(`Error adding ${infoType}:`, error);
     res.status(500).json({ message: `Failed to add ${infoType}` });
@@ -187,99 +201,69 @@ app.post('/api/patients/:patientId/:infoType', protect, async (req, res) => {
 });
 
 // --- Protected Appointment Routes (for Doctors) ---
-
-// GET all appointments for a specific patient
 app.get('/api/patients/:id/appointments', protect, async (req, res) => {
   try {
-    const appointments = await Appointment.find({ patientId: req.params.id });
-    res.json(appointments);
+    const result = await pool.query('SELECT * FROM appointments WHERE patient_id = $1', [req.params.id]);
+    res.json(result.rows);
   } catch (error) {
     res.status(500).json({ message: 'Failed to fetch appointments' });
   }
 });
 
-// --- Protected Appointment Routes (for Doctors) ---
-
-// GET all appointments for a specific doctor
 app.get('/api/doctors/:doctorId/appointments', protect, async (req, res) => {
   try {
-    const appointments = await Appointment.find({ doctorId: req.params.doctorId });
-    res.json(appointments);
+    const result = await pool.query('SELECT * FROM appointments WHERE doctor_id = $1', [req.params.doctorId]);
+    res.json(result.rows);
   } catch (error) {
     res.status(500).json({ message: 'Failed to fetch appointments' });
   }
 });
 
-// UPDATE appointment status (for doctors)
 app.put('/api/appointments/:appointmentId', protect, async (req, res) => {
   try {
     const { appointmentId } = req.params;
-    const { status } = req.body; // Expecting 'status' in the body
-
+    const { status } = req.body;
     if (!['pending', 'confirmed', 'completed', 'cancelled'].includes(status)) {
       return res.status(400).json({ message: 'Invalid status value' });
     }
-
-    const updatedAppointment = await Appointment.findOneAndUpdate(
-      { id: appointmentId },
-      { status },
-      { new: true } // Return the updated document
+    const result = await pool.query(
+      'UPDATE appointments SET status = $1 WHERE id = $2 RETURNING *',
+      [status, appointmentId]
     );
-
-    if (!updatedAppointment) {
+    if (result.rowCount === 0) {
       return res.status(404).json({ message: 'Appointment not found' });
     }
-
-    res.json(updatedAppointment);
+    res.json(result.rows[0]);
   } catch (error) {
     console.error('Update Appointment Error:', error);
     res.status(500).json({ message: 'Failed to update appointment status' });
   }
 });
 
-
-
-
-
-
 // --- Public Appointment Request Route (for Patients) ---
-
 app.post('/api/appointments/request', async (req, res) => {
   const { name, emailOrMobile, date, time, reason } = req.body;
-
   if (!name || !emailOrMobile || !date || !time || !reason) {
     return res.status(400).json({ message: 'All fields are required.' });
   }
-
   try {
-    // Find patient or create a new one
-    let patient = await Patient.findOne({ emailOrMobile });
+    const patientResult = await pool.query('SELECT * FROM patients WHERE email_or_mobile = $1', [emailOrMobile]);
+    let patient = patientResult.rows[0];
+
     if (!patient) {
-      patient = new Patient({
-        id: `pat_${Date.now()}`,
-        name,
-        emailOrMobile,
-        // Add default/placeholder values for other required fields
-        dateOfBirth: new Date(),
-        gender: 'Not specified',
-        contactNumber: emailOrMobile,
-        address: 'Not specified',
-      });
-      await patient.save();
+      const newPatientId = `pat_${Date.now()}`;
+      const newPatientResult = await pool.query(
+        'INSERT INTO patients (id, name, date_of_birth, gender, email_or_mobile, contact_number, address) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *',
+        [newPatientId, name, new Date('1900-01-01'), 'Not specified', emailOrMobile, emailOrMobile, 'Not specified']
+      );
+      patient = newPatientResult.rows[0];
     }
-
-    // Create the new appointment
-    const appointment = new Appointment({
-      id: `appt_${Date.now()}`,
-      patientId: patient.id,
-      patientName: patient.name,
-      date, time, reason,
-    });
-    await appointment.save();
-
-    // Return the patient object so the frontend can get the ID
-    res.status(201).json(patient);
-
+    const newAppointmentId = `appt_${Date.now()}`;
+    await pool.query(
+      'INSERT INTO appointments (id, patient_id, patient_name, date, time, reason) VALUES ($1, $2, $3, $4, $5, $6)',
+      [newAppointmentId, patient.id, patient.name, date, time, reason]
+    );
+    res.status(201).json(patient); // Return the patient object as before
   } catch (error) {
     console.error('Appointment Request Error:', error);
     res.status(500).json({ message: 'Failed to process appointment request.' });
