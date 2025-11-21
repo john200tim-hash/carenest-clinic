@@ -45,6 +45,9 @@ const DoctorAppointmentsPage = () => {
   if (error) return <p className="text-red-500">Error: {error}</p>;
 
   const handleStatusChange = async (appointmentId: string, newStatus: string) => {
+    // Definitive Fix: Add a guard clause to ensure the user is authenticated.
+    if (!doctorUser) return;
+
     try {
       const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL;
       const response = await fetch(`${API_BASE_URL}/api/appointments/${appointmentId}`, {
