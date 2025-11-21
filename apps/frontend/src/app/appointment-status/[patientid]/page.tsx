@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { Patient } from '@/types/patient';
 import { Appointment } from '@/types/appointment';
 import { formatDate } from '@/lib/formatDate';
+import { usePatients } from '@/context/PatientContext'; // Import the context hook
 
 type PatientView = 'appointments' | 'records';
 
@@ -12,26 +13,36 @@ interface Props {
 }
 
 export default function AppointmentStatusPage({ params }: Props) {
+  const { patients: mockPatients } = usePatients(); // Get the mock patients from the context
   const [patient, setPatient] = useState<Patient | null>(null);
-  const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<PatientView>('appointments');
 
   useEffect(() => {
     const fetchData = async () => {
-      const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL;
       setLoading(true);
       setError(null);
+
+      // --- DEFINITIVE FIX: Check for mock data first ---
+      const mockPatient = mockPatients.find(p => p.id === params.patientId);
+
+      if (mockPatient) {
+        // If we find the patient in our mock data, use it directly.
+        setPatient(mockPatient);
+        setLoading(false);
+        return; // Stop execution to prevent fetching from the backend.
+      }
+
+      // --- Original backend fetch logic (will run if mock data is not found) ---
       try {
-        const response = await fetch(`${API_BASE_URL}/api/public/patients/${params.patientId}`); // This endpoint now returns the full patient
+        const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL;
+        const response = await fetch(`${API_BASE_URL}/api/public/patients/${params.patientId}`);
         if (!response.ok) {
           throw new Error('Failed to fetch your records. Please check your Patient ID.');
         }
         const data: Patient = await response.json();
-
         setPatient(data);
-
       } catch (err: any) {
         setError(err.message);
       } finally {
@@ -39,11 +50,15 @@ export default function AppointmentStatusPage({ params }: Props) {
       }
     };
 
-    fetchData();
-  }, [params.patientId]);
+    // Only run fetch if we have the mock patient data available from the context
+    if (mockPatients.length > 0) {
+        fetchData();
+    }
+  }, [params.patientId, mockPatients]);
 
   if (loading) return <p className="text-center mt-10">Loading Status...</p>;
   if (error) return <p className="text-center mt-10 text-red-500">Error: {error}</p>;
+  if (!patient) return <p className="text-center mt-10">Patient not found.</p>;
 
   const TabButton = ({ tabName, label }: { tabName: PatientView, label: string }) => (
     <button
