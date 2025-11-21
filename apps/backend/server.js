@@ -3,6 +3,7 @@ const cors = require('cors');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const { Pool } = require('pg');
+const redis = require('redis');
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -15,6 +16,14 @@ const pool = new Pool({
 pool.connect()
   .then(() => console.log('Successfully connected to PostgreSQL'))
   .catch(err => console.error('Connection error', err));
+
+// --- Redis Connection ---
+// The 'redis' library automatically uses the REDIS_URL environment variable on Railway.
+const redisClient = redis.createClient({
+  url: process.env.REDIS_URL
+});
+redisClient.on('error', err => console.log('Redis Client Error', err));
+redisClient.connect().then(() => console.log('Successfully connected to Redis'));
 
 app.use(cors());
 app.use(express.json());
@@ -124,6 +133,16 @@ app.get('/api/patients', protect, async (req, res) => {
 // --- Protected Patient CRUD Routes (for Doctors) ---
 app.get('/api/patients/:id', protect, async (req, res) => {
   try {
+    const cacheKey = `cache:patient:${req.params.id}`;
+
+    // 1. Try to get data from Redis cache first
+    const cachedPatient = await redisClient.get(cacheKey);
+    if (cachedPatient) {
+      console.log(`Serving patient ${req.params.id} from cache.`);
+      return res.json(JSON.parse(cachedPatient));
+    }
+
+    // 2. If not in cache, get data from PostgreSQL
     const patientResult = await pool.query('SELECT * FROM patients WHERE id = $1', [req.params.id]);
     const patient = patientResult.rows[0];
     if (!patient) {
@@ -139,7 +158,12 @@ app.get('/api/patients/:id', protect, async (req, res) => {
       pool.query('SELECT * FROM appointments WHERE patient_id = $1', [req.params.id]).then(r => r.rows),
     ]);
 
-    res.json({ ...patient, symptoms, diagnoses, prescriptions, bills, appointments });
+    const fullPatientData = { ...patient, symptoms, diagnoses, prescriptions, bills, appointments };
+
+    // 3. Save the fresh data to the Redis cache for next time, with a 5-minute TTL (300 seconds)
+    await redisClient.set(cacheKey, JSON.stringify(fullPatientData), { EX: 300 });
+
+    res.json(fullPatientData);
   } catch (error) {
     res.status(500).json({ message: 'Failed to fetch patient data' });
   }
@@ -275,6 +299,31 @@ app.post('/api/appointments/request', async (req, res) => {
   } catch (error) {
     console.error('Appointment Request Error:', error);
     res.status(500).json({ message: 'Failed to process appointment request.' });
+  }
+});
+
+// --- Public Patient Status Endpoint (for patients to view their own status) ---
+app.get('/api/public/patients/:id', async (req, res) => {
+  try {
+    const patientResult = await pool.query('SELECT * FROM patients WHERE id = $1', [req.params.id]);
+    const patient = patientResult.rows[0];
+    if (!patient) {
+      return res.status(404).json({ message: 'Patient not found' });
+    }
+
+    // Fetch related data for the public view
+    const [symptoms, diagnoses, prescriptions, bills, appointments] = await Promise.all([
+      pool.query('SELECT * FROM symptoms WHERE patient_id = $1', [req.params.id]).then(r => r.rows),
+      pool.query('SELECT * FROM diagnoses WHERE patient_id = $1', [req.params.id]).then(r => r.rows),
+      pool.query('SELECT * FROM prescriptions WHERE patient_id = $1', [req.params.id]).then(r => r.rows),
+      pool.query('SELECT * FROM bills WHERE patient_id = $1', [req.params.id]).then(r => r.rows),
+      pool.query('SELECT * FROM appointments WHERE patient_id = $1', [req.params.id]).then(r => r.rows),
+    ]);
+
+    res.json({ ...patient, symptoms, diagnoses, prescriptions, bills, appointments });
+  } catch (error) {
+    console.error('Public Patient Fetch Error:', error);
+    res.status(500).json({ message: 'Failed to fetch public patient data.' });
   }
 });
 

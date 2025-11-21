@@ -4,7 +4,7 @@ import React, { useState } from 'react';
 import { Patient } from '@/types/patient';
 import { usePatients } from '@/context/PatientContext';
 
-const DoctorEntryForm = ({ patient }: { patient: Patient }) => {
+const MedicalInfoManager = ({ patient }: { patient: Patient }) => {
   const { addMedicalInfo } = usePatients();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -145,7 +145,7 @@ const DoctorEntryForm = ({ patient }: { patient: Patient }) => {
   );
 };
 
-export default DoctorEntryForm;
+export default MedicalInfoManager;
 
 /* This is a placeholder for the old MedicalInfoManager, we will replace its usage */
 interface MedicalInfoManagerProps {
