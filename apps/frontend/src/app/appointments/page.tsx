@@ -5,7 +5,7 @@ import { useAuth } from '@/context/AuthContext';
 import { Appointment } from '@/types/appointment';
 import { formatDate } from '@/lib/formatDate';
 import { useRouter } from 'next/navigation';
-
+ 
 const DoctorAppointmentsPage = () => {
   const { doctorUser } = useAuth();
   const [appointments, setAppointments] = useState<Appointment[]>([]);
@@ -13,7 +13,7 @@ const DoctorAppointmentsPage = () => {
   const [error, setError] = useState<string | null>(null);  const router = useRouter();
 
   useEffect(() => {
-    const fetchAppointments = async () => {
+  const fetchAppointments = async () => {
     if (!doctorUser?.token) return; // Use doctorUser
       try {
         setLoading(true);
@@ -21,7 +21,7 @@ const DoctorAppointmentsPage = () => {
         const response = await fetch(`${API_BASE_URL}/api/doctors/${doctorUser.id}/appointments`, {
           headers: {
             'Content-Type': 'application/json',
-            'Authorization': `Bearer ${doctorUser.token}`
+          'Authorization': `Bearer ${doctorUser.token}`
           }
         });
 
@@ -30,10 +30,10 @@ const DoctorAppointmentsPage = () => {
         }
 
         const data: Appointment[] = await response.json();
-        setAppointments(data.map(appt => ({...appt, date: new Date(appt.date)})));
+      setAppointments(data.map(appt => ({...appt, date: new Date(appt.date)})));
       } catch (err: any) {
         setError(err.message);
-    } finally {
+  } finally {
         setLoading(false);
       }
     };
@@ -41,7 +41,7 @@ const DoctorAppointmentsPage = () => {
     fetchAppointments();
   }, [doctorUser]);
 
-  if (loading) return <p>Loading appointments...</p>;
+  if (loading) return <p>Loading appointments...</p>; 
   if (error) return <p className="text-red-500">Error: {error}</p>;
 
   const handleStatusChange = async (appointmentId: string, newStatus: string) => {
@@ -51,7 +51,7 @@ const DoctorAppointmentsPage = () => {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${doctorUser.token}`
+        'Authorization': `Bearer ${doctorUser.token}`
         },
         body: JSON.stringify({ status: newStatus }),
       });
@@ -63,7 +63,7 @@ const DoctorAppointmentsPage = () => {
     }
   };
 
-
+ 
   return (
     <div className="container mx-auto p-8">
       <h1 className="text-3xl font-bold mb-6">Your Appointments</h1>
@@ -71,7 +71,7 @@ const DoctorAppointmentsPage = () => {
         <ul className="space-y-4">
           {appointments.map(appt => (
             <li key={appt.id} className="p-4 border rounded-lg shadow-md bg-white">
-              <div className="flex justify-between items-center">
+            <div className="flex justify-between items-center">
                 <div>
                   <h3 className="text-xl font-semibold">{appt.patientName}</h3>
                   <p className="text-gray-600">Date: {formatDate(new Date(appt.date))} at {appt.time}</p>
@@ -89,10 +89,10 @@ const DoctorAppointmentsPage = () => {
                 </select>
               </div>
 
-
+ 
               </div>
             </li>
-          ))}
+          ))} 
         </ul>
       ) : (
         <p className="text-gray-500">No appointments found.</p>
