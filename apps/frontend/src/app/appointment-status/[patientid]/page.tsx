@@ -4,7 +4,6 @@ import { useEffect, useState } from 'react';
 import { Patient } from '@/types/patient';
 import { Appointment } from '@/types/appointment';
 import { formatDate } from '@/lib/formatDate';
-import { usePatients } from '@/context/PatientContext'; // Import the context hook
 
 type PatientView = 'appointments' | 'records';
 
@@ -13,7 +12,6 @@ interface Props {
 }
 
 export default function AppointmentStatusPage({ params }: Props) {
-  const { patients: mockPatients } = usePatients(); // Get the mock patients from the context
   const [patient, setPatient] = useState<Patient | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -24,24 +22,14 @@ export default function AppointmentStatusPage({ params }: Props) {
       setLoading(true);
       setError(null);
 
-      // --- DEFINITIVE FIX: Check for mock data first ---
-      const mockPatient = mockPatients.find(p => p.id === params.patientId);
-
-      if (mockPatient) {
-        // If we find the patient in our mock data, use it directly.
-        setPatient(mockPatient);
-        setLoading(false);
-        return; // Stop execution to prevent fetching from the backend.
-      }
-
-      // --- Original backend fetch logic (will run if mock data is not found) ---
+      // --- Live Fetch Logic ---
       try {
         const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL;
         const response = await fetch(`${API_BASE_URL}/api/public/patients/${params.patientId}`);
         if (!response.ok) {
           throw new Error('Failed to fetch your records. Please check your Patient ID.');
         }
-        const data: Patient = await response.json();
+        const data: Patient = await response.json(); // The backend now returns the full patient object with all medical data
         setPatient(data);
       } catch (err: any) {
         setError(err.message);
@@ -50,11 +38,8 @@ export default function AppointmentStatusPage({ params }: Props) {
       }
     };
 
-    // Only run fetch if we have the mock patient data available from the context
-    if (mockPatients.length > 0) {
-        fetchData();
-    }
-  }, [params.patientId, mockPatients]);
+    fetchData();
+  }, [params.patientId]);
 
   if (loading) return <p className="text-center mt-10">Loading Status...</p>;
   if (error) return <p className="text-center mt-10 text-red-500">Error: {error}</p>;
@@ -120,9 +105,9 @@ export default function AppointmentStatusPage({ params }: Props) {
             {activeTab === 'records' && (
               <div className="space-y-4">
                 <RecordSection title="Symptoms" items={patient?.symptoms} render={item => `${formatDate(new Date(item.date))}: ${item.description} (${item.severity})`} />
-                <RecordSection title="Diagnoses" items={patient?.diagnoses} render={item => `${formatDate(new Date(item.date))}: ${item.condition} - Notes: ${item.notes}`} />
+                <RecordSection title="Diagnoses" items={patient?.diagnoses} render={item => `${formatDate(new Date(item.date))}: ${item.condition} - Notes: ${item.notes || 'N/A'}`} />
                 <RecordSection title="Prescriptions" items={patient?.prescriptions} render={item => `${formatDate(new Date(item.startDate))}: ${item.medication} (${item.dosage})`} />
-                <RecordSection title="Bills" items={patient?.bills} render={item => `${formatDate(new Date(item.date))}: ${item.description} - $${item.amount.toFixed(2)} (${item.status})`} />
+                <RecordSection title="Bills" items={patient?.bills} render={item => `${formatDate(new Date(item.date))}: ${item.item} - $${Number(item.bill).toFixed(2)} (${item.status})`} />
               </div>
             )}
           </div>

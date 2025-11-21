@@ -30,21 +30,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL;
 
   useEffect(() => {
-    // --- TEMPORARY BYPASS (Active for development) ---
-    const mockDoctor: DoctorUser = {
-      id: 'doc_dev_123',
-      name: 'Dr. Developer',
-      email: 'dev@clinic.com',
-      token: 'mock-jwt-for-development'
-    };
-    setDoctorUser(mockDoctor);
-    setLoading(false);
-
-    /* --- ORIGINAL AUTH LOGIC (Commented out) ---
+    // --- Live Authentication Logic ---
+    // Check for a token in local storage on initial load
     const token = localStorage.getItem('doctorToken'), id = localStorage.getItem('doctorId'), name = localStorage.getItem('doctorName'), email = localStorage.getItem('doctorEmail');
     if (token && id && name && email) { setDoctorUser({ id, name, email, token }); }
     setLoading(false);
-    */
   }, []);
 
   const registerDoctor = async (name: string, email: string, password: string, registrationCode: string): Promise<void> => {

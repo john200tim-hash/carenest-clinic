@@ -2,16 +2,11 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { usePatients } from '@/context/PatientContext';
 
 const ViewRecordsPage = () => {
   const [patientId, setPatientId] = useState('');
   const [error, setError] = useState('');
   const router = useRouter();
-  const { patients } = usePatients();
-
-  // For now, just pick the first patient in the list for the bypass
-  const defaultPatientId = patients.length > 0 ? patients[0].id : null;
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -21,15 +16,6 @@ const ViewRecordsPage = () => {
     }
     // Redirect to the dynamic appointment status page
     router.push(`/appointment-status/${patientId.trim()}`);
-  };
-
-  const handleBypass = () => {
-    // If there's a default patient, navigate to their record
-    if (defaultPatientId) {
-      router.push(`/appointment-status/${defaultPatientId}`);
-    } else {
-      setError('No mock patients available for bypass. Please check the PatientContext.');
-    }
   };
 
   return (
@@ -57,12 +43,6 @@ const ViewRecordsPage = () => {
           <button type="submit" className="w-full px-4 py-3 bg-blue-600 text-white font-bold rounded-md hover:bg-blue-700">
             View Records
           </button>
-          {/* Add a bypass button for development */}
-          {defaultPatientId && (
-            <button type="button" onClick={handleBypass} className="w-full px-4 py-3 bg-green-600 text-white font-bold rounded-md hover:bg-green-700">
-              Bypass and View First Mock Patient's Records
-            </button>
-          )}
         </form>
       </div>
     </div>

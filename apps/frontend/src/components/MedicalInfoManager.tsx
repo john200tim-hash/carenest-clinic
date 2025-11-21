@@ -13,7 +13,7 @@ const DoctorEntryForm = ({ patient }: { patient: Patient }) => {
   const [symptoms, setSymptoms] = useState([{ description: '', date: '', severity: 'Mild' }]);
   const [diagnoses, setDiagnoses] = useState([{ condition: '', date: '', notes: '' }]);
   const [prescriptions, setPrescriptions] = useState([{ medication: '', dosage: '', startDate: '', endDate: '' }]);
-  const [bills, setBills] = useState([{ description: '', amount: '', date: '', status: 'Unpaid' }]);
+  const [bills, setBills] = useState([{ item: '', bill: '', date: '', status: 'Unpaid' }]);
 
   const handleChange = (setter: any, index: number, field: string, value: any) => {
     setter((prev: any) => {
@@ -49,7 +49,7 @@ const DoctorEntryForm = ({ patient }: { patient: Patient }) => {
       if (infoType === 'symptoms') setSymptoms([{ description: '', date: '', severity: 'Mild' }]);
       if (infoType === 'diagnoses') setDiagnoses([{ condition: '', date: '', notes: '' }]);
       if (infoType === 'prescriptions') setPrescriptions([{ medication: '', dosage: '', startDate: '', endDate: '' }]);
-      if (infoType === 'bills') setBills([{ description: '', amount: '', date: '', status: 'Unpaid' }]);
+      if (infoType === 'bills') setBills([{ item: '', bill: '', date: '', status: 'Unpaid' }]);
 
     } catch (err: any) {
       setError(err.message || `Failed to update ${infoType}.`);
@@ -124,9 +124,9 @@ const DoctorEntryForm = ({ patient }: { patient: Patient }) => {
         { name: 'endDate', label: 'End Date', type: 'date' },
       ])}
 
-      {renderSection('Bills', bills, setBills, { description: '', amount: '', date: '', status: 'Unpaid' }, [
-        { name: 'description', label: 'Service Description', type: 'text' },
-        { name: 'amount', label: 'Amount', type: 'number' },
+      {renderSection('Bills', bills, setBills, { item: '', bill: '', date: '', status: 'Unpaid' }, [
+        { name: 'item', label: 'Service/Item', type: 'text' },
+        { name: 'bill', label: 'Bill Amount', type: 'number' },
         { name: 'date', label: 'Date', type: 'date' },
         { name: 'status', label: 'Status', type: 'select', options: ['Unpaid', 'Paid'] },
       ])}

@@ -14,15 +14,12 @@ const Navbar = () => {
           Captimed Clinic
         </Link>
         <div className="space-x-6 flex items-center">
-          {/* Public Links */}
-          <Link href="/view-records" className="text-gray-600 hover:text-blue-600">
-            Patient Records
-          </Link>
-
-          {/* Doctor-Only Links */}
-          {doctorUser ? ( // Use doctorUser
+          {doctorUser ? (
+            // --- Links for Logged-In Doctors ---
             <>
-              {/* Links for logged-in doctors */}
+              <Link href="/doctors/dashboard" className="text-gray-600 hover:text-blue-600">
+                Dashboard
+              </Link>
               <Link href="/appointments" className="text-gray-600 hover:text-blue-600 mr-4">
                 Appointments
               </Link>
@@ -36,7 +33,14 @@ const Navbar = () => {
                 Logout
               </button>
             </>
-          ) : null}
+          ) : (
+            // --- Public Links for Logged-Out Users ---
+            <>
+              <Link href="/view-records" className="text-gray-600 hover:text-blue-600">
+                Patient Records
+              </Link>
+            </>
+          )}
         </div>
       </nav>
     </header>

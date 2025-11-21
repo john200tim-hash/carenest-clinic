@@ -48,34 +48,7 @@ export const PatientProvider = ({ children }: PatientProviderProps) => { // Rena
     setLoading(true);
     setError(null);
 
-    // --- TEMPORARY BYPASS: Use mock data instead of fetching ---
-    const mockPatients: Patient[] = [
-      {
-        id: 'pat_mock_001',
-        name: 'Mock Alice Johnson',
-        dateOfBirth: new Date('1985-05-20'),
-        gender: 'Female',
-        emailOrMobile: 'alice.j@example.com',
-        contactNumber: '123-456-7890',
-        address: '123 Maple St, Springfield',
-        medicalHistory: 'Seasonal allergies. No major surgeries.',
-      },
-      {
-        id: 'pat_mock_002',
-        name: 'Mock Bob Williams',
-        dateOfBirth: new Date('1992-09-15'),
-        gender: 'Male',
-        emailOrMobile: 'bob.w@example.com',
-        contactNumber: '987-654-3210',
-        address: '456 Oak Ave, Metropolis',
-        medicalHistory: 'History of migraines.',
-      }
-    ];
-    setPatients(mockPatients);
-    setLoading(false);
-    return;
-
-    /* --- ORIGINAL FETCH LOGIC (Commented out for bypass) ---
+    // --- Live Data Fetching Logic ---
     try {
       const response = await fetch(`${API_BASE_URL}/patients`, {
         headers: getAuthHeaders(),
@@ -95,7 +68,6 @@ export const PatientProvider = ({ children }: PatientProviderProps) => { // Rena
     } finally {
       setLoading(false);
     }
-    */
   };
 
 
@@ -199,7 +171,9 @@ export const PatientProvider = ({ children }: PatientProviderProps) => { // Rena
     deletePatient,
     getPatientById,
     addMedicalInfo,
-    getAuthHeaders, // Add missing function to context value
+    getAuthHeaders,
+    loading,
+    error,
   };
 
   return (

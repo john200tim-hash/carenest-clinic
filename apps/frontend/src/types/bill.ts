@@ -1,8 +1,8 @@
 export interface Bill {
   id: string;
-  amount: number;
+  item: string; // Changed from description
+  bill: number; // Changed from amount
   date: Date;
-  description: string;
   status: string;
 }
 

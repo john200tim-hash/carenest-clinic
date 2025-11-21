@@ -27,13 +27,9 @@ export default function HomePage() {
         {/* Doctor Module */}
         <div className="p-8 border rounded-lg shadow-lg bg-white">
           <h2 className="text-2xl font-bold mb-4 text-center text-green-700">For Doctors</h2>
-          <div className="space-y-4">
-            <p className="text-center text-gray-500">
-              Access the clinic's management dashboard.
-              (Authentication is currently bypassed for development)
-            </p>
-            <Link href="/doctors/dashboard" className="block w-full text-center px-4 py-3 bg-green-600 text-white font-bold rounded-md hover:bg-green-700">
-              Go to Doctor Dashboard
+          <div className="space-y-4 mt-6">
+            <Link href="/doctors/login" className="block w-full text-center px-4 py-3 bg-green-600 text-white font-bold rounded-md hover:bg-green-700">
+              Doctor Login
             </Link>
           </div>
         </div>

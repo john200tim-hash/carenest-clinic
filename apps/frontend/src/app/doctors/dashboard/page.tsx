@@ -15,6 +15,7 @@ const DoctorDashboardPage = () => {
   const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [patients, setPatients] = useState<Patient[]>([]);
   const [loading, setLoading] = useState(true);
+
   const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<DoctorDashboardView>('appointments');
 
@@ -23,6 +24,7 @@ const DoctorDashboardPage = () => {
   const [formError, setFormError] = useState('');
   const [formSuccess, setFormSuccess] = useState('');
 
+
   const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL;
 
   const fetchData = async () => {
@@ -30,6 +32,7 @@ const DoctorDashboardPage = () => {
     setLoading(true);
     setError(null);
     try {
+
       const headers = { 'Content-Type': 'application/json', 'Authorization': `Bearer ${doctorUser.token}` };
       const [appointmentsRes, patientsRes] = await Promise.all([
         fetch(`${API_BASE_URL}/api/doctors/${doctorUser.id}/appointments`, { headers }),
@@ -37,10 +40,12 @@ const DoctorDashboardPage = () => {
       ]);
       if (!appointmentsRes.ok || !patientsRes.ok) throw new Error('Failed to fetch dashboard data.');
       const appointmentsData = await appointmentsRes.json();
+
       const patientsData = await patientsRes.json();
       setAppointments(appointmentsData.map((a: any) => ({ ...a, date: new Date(a.date) })));
       setPatients(patientsData);
     } catch (err: any) {
+
       setError(err.message);
     } finally {
       setLoading(false);
@@ -49,6 +54,7 @@ const DoctorDashboardPage = () => {
 
   useEffect(() => {
     fetchData();
+
   }, [doctorUser]);
 
   const handleFormChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
@@ -58,6 +64,7 @@ const DoctorDashboardPage = () => {
   const handleFormSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setFormError('');
+
     setFormSuccess('');
     try {
       const response = await fetch(`${API_BASE_URL}/api/appointments/doctor-create`, {
@@ -66,6 +73,7 @@ const DoctorDashboardPage = () => {
         body: JSON.stringify(form),
       });
       const data = await response.json();
+
       if (!response.ok) throw new Error(data.message || 'Failed to create appointment.');
       setFormSuccess(`Appointment created for ${data.patientName} on ${formatDate(new Date(data.date))}.`);
       setForm({ patientId: '', date: '', time: '', reason: '' });
@@ -76,6 +84,7 @@ const DoctorDashboardPage = () => {
   };
 
   const TabButton = ({ tabName, label }: { tabName: DoctorDashboardView, label: string }) => (
+
     <button onClick={() => setActiveTab(tabName)} className={`px-4 py-2 text-sm font-medium rounded-md ${activeTab === tabName ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'}`}>
       {label}
     </button>
@@ -83,6 +92,7 @@ const DoctorDashboardPage = () => {
 
   if (loading) return <p className="text-center mt-10">Loading Dashboard...</p>;
   if (error) return <p className="text-center mt-10 text-red-500">Error: {error}</p>;
+
 
   return (
     <div className="container mx-auto p-8">
@@ -95,6 +105,7 @@ const DoctorDashboardPage = () => {
 
       <div>
         {activeTab === 'appointments' && (
+
           <div className="p-4 border rounded-lg shadow-sm bg-white">
             <h3 className="text-xl font-semibold mb-4 text-gray-700">All Scheduled Appointments</h3>
             {appointments.length > 0 ? (
@@ -110,6 +121,7 @@ const DoctorDashboardPage = () => {
         )}
 
         {activeTab === 'schedule' && (
+
           <form onSubmit={handleFormSubmit} className="p-6 border rounded-lg shadow-sm bg-white space-y-4">
             <h3 className="text-xl font-semibold text-gray-700">Schedule a New Appointment</h3>
             {formError && <p className="text-red-500 bg-red-100 p-2 rounded-md">{formError}</p>}
@@ -140,6 +152,7 @@ const DoctorDashboardPage = () => {
         )}
 
         {activeTab === 'patients' && (
+
           <div className="p-4 border rounded-lg shadow-sm bg-white">
             <h3 className="text-xl font-semibold mb-4 text-gray-700">All Enrolled Patients</h3>
             <div className="overflow-x-auto">
@@ -171,6 +184,7 @@ const DoctorDashboardPage = () => {
       </div>
       <style jsx>{`.input-field{display:block;width:100%;padding:0.5rem;border-radius:0.375rem;border:1px solid #d1d5db;margin-top:0.25rem;}`}</style>
     </div>
+
   );
 };
 
