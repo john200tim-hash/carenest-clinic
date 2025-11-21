@@ -172,8 +172,6 @@ export const PatientProvider = ({ children }: PatientProviderProps) => { // Rena
     getPatientById,
     addMedicalInfo,
     getAuthHeaders,
-    loading,
-    error,
   };
 
   return (
