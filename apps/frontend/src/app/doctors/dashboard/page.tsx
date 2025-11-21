@@ -9,6 +9,7 @@ import Link from 'next/link';
 
 type DoctorDashboardView = 'appointments' | 'schedule' | 'patients';
 
+
 const DoctorDashboardPage = () => {
   const { doctorUser } = useAuth();
   const [appointments, setAppointments] = useState<Appointment[]>([]);
